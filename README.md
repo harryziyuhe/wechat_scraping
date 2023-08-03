@@ -1,1 +1,1 @@
-# wechat_scraping
+# Scraping WeChat Official Accounts
