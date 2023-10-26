@@ -46,7 +46,6 @@ def scrape_text(name, link_subdir, text_subdir, chromedriver_dir):
     browser.set_page_load_timeout(60)
     print("working fine")
     for link in tqdm(urls):
-        
         try:
             browser.get("http://httpbin.org/ip")
         except Exception as e:
@@ -59,7 +58,7 @@ def get_ip():
     options.add_argument('--proxy-server=%s' % PROXY)
     service = ChromeService(executable_path=chromedriver_dir)
     browser = webdriver.Chrome(service = service, options = options)
-    browser.get("http://mp.weixin.qq.com/s?__biz=MjM5MDk1NzQzMQ==&amp;mid=2653737689&amp;idx=1&amp;sn=13fdaf8043adbbdda3aae8262529460a&amp;chksm=bd6498c18a1311d7cfd5ec4fd5d3c7119276ba2fdaf3ffa84a7ada8b80761ab6232327a8836a&amp;scene=27#wechat_redirect")
+    browser.get("http://httpbin.org/ip")
     ip = browser.find_element(By.XPATH, "/html/body/pre").text.split(":")[-1]
     ip = ip.replace("\"", "")
     #time.sleep(1)
@@ -78,14 +77,14 @@ def test_ip():
 
 
 if __name__ == "__main__":
-    directory = os.path.dirname(os.getcwd()) + "/02_data"
-    link_subdir = "02_links"
-    text_subdir = "03_text"
-    os.chdir(directory)
+    #directory = os.path.dirname(os.getcwd()) + "/02_data"
+    #link_subdir = "02_links"
+    #text_subdir = "03_text"
+    #os.chdir(directory)
     chromedriver_dir = '/usr/local/bin/chromedriver'
-    files = os.listdir(link_subdir)
-    accounts = pd.read_excel("01_metadata/wechat_metadata.xlsx")
-    names = accounts.Chinese.values
+    #files = os.listdir(link_subdir)
+    #accounts = pd.read_excel("01_metadata/wechat_metadata.xlsx")
+    #names = accounts.Chinese.values
     #for name in names:
     #    if name + ".csv" not in files:
     #        print(name + "links not yet scraped")
