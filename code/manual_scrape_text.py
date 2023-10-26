@@ -69,12 +69,19 @@ def scrape_account(accounts, links_subdir, text_subdir, chromedriver_dir):
         service = ChromeService(executable_path=chromedriver_dir)
         driver = webdriver.Chrome(service = service, options = options)
         for n in tqdm(range(len(urls))):
-            if n in URL:
+            url = urls[n]            
+            if url in URL:
                 print("URL already scraped")
                 continue
-            url = urls[n]
             try:
                 driver.get(url)  # Navigates to the supplied URL
+                for count in range(6):
+                    if len(driver.find_elements(By.CLASS_NAME, 'common_share_title')) > 0 or len(driver.find_elements(By.CLASS_NAME, 'rich_media_title')) > 0:
+                        break
+                    else:
+                        time.sleep(2)
+                    if count % 2 == 1:
+                        driver.get(url)        
                 if len(driver.find_elements(By.CSS_SELECTOR, "#js_article > div.rich_media_area_primary.video_channel.rich_media_area_primary_full")) > 0:
                     title.append(driver.find_element(By.CLASS_NAME, "common_share_title").text)
                     meta.append(driver.find_element(By.CLASS_NAME, "flex_context").text)
@@ -109,7 +116,7 @@ if __name__ == "__main__":
     os.chdir(directory)
     links_subdir = "links"
     text_subdir = "texts"
-    accounts = ["北美留学生日报", "INSIGHT视界"]
+    accounts = ["北美留学生日报"]
     scrape_account(accounts = accounts,
                    links_subdir = links_subdir,
                    text_subdir = text_subdir,
