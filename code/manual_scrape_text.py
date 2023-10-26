@@ -12,6 +12,7 @@ from stem.control import Controller
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
+from webdriver_manager.chrome import ChromeDriverManager
 
 def renew_connection():
     with Controller.from_port(port = 9051) as controller:
@@ -20,10 +21,9 @@ def renew_connection():
 
 def get_ip():
     PROXY = "socks5://localhost:9050"  # IP:PORT or HOST:PORT
-    options = webdriver.ChromeOptions()
-    options.add_argument('--proxy-server=%s' % PROXY)
-    service = ChromeService(executable_path=chromedriver_dir)
-    driver = webdriver.Chrome(service = service, options = options)
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument('--proxy-server=%s' % PROXY)
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
     driver.get("http://httpbin.org/ip")
     ip = driver.find_element(By.XPATH, "/html/body/pre").text.split(":")[-1]
     ip = ip.replace("\"", "")
@@ -64,10 +64,9 @@ def scrape_account(accounts, links_subdir, text_subdir, chromedriver_dir):
             URL = []
             urls = temp.url.values
         PROXY = "socks5://localhost:9050"  # IP:PORT or HOST:PORT
-        options = webdriver.ChromeOptions()
-        options.add_argument('--proxy-server=%s' % PROXY)
-        service = ChromeService(executable_path=chromedriver_dir)
-        driver = webdriver.Chrome(service = service, options = options)
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_argument('--proxy-server=%s' % PROXY)
+        driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
         for n in tqdm(range(len(urls))):
             url = urls[n]            
             if url in URL:
@@ -110,8 +109,7 @@ def scrape_account(accounts, links_subdir, text_subdir, chromedriver_dir):
         driver.close()
 
 if __name__ == "__main__":
-    chromedriver_dir = '/usr/local/bin/chromedriver'
-    
+    chromedriver_dir = '/usr/bin/chromedriver'
     directory = os.path.dirname(os.getcwd()) + "/datasets"
     os.chdir(directory)
     links_subdir = "links"
