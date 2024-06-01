@@ -15,4 +15,5 @@ class Requests:
                 f.write("error")
             f.close()
 
-addons = [Requests()]
+if __name__=="__main__":
+    addons = [Requests()]

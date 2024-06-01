@@ -16,7 +16,7 @@ def get_url(name, biz, uin, key, start_timestamp = 0, start_count = 0, end_count
         while True:
             res = scrape_urls(biz, uin, key, offset = start_count)
             if res == []:
-                key = utils.click_account(account_name = name, biz = biz, exp_key = key)
+                key, pass_ticket = utils.click_account(account_name = name, biz = biz, exp_key = key)
                 res = scrape_urls(biz, uin, key, offset = start_count)
                 if res == []:
                     subprocess.Popen(['notify-send -u critical', "Scraping Finished"])
@@ -43,12 +43,14 @@ def scrape_urls(biz, uin, key, offset = "0", cookie = "", proxies = {"http": Non
     headers = {"Cookies": cookie}
     params = {
         "action": "getmsg",
-        "__biz": biz,
         "f": "json",
-        "offset": str(offset),
         "count": "10",
+        "is_ok": "1",
+        "__biz": biz,
+        "key": key,
         "uin": uin,
-        "key": key
+        "pass_ticket": pass_ticket,
+        "offset": str(offset)
     }
     origin_url = "https://mp.weixin.qq.com/mp/profile_ext"
     msg_json = s.get(

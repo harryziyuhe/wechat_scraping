@@ -13,6 +13,8 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 def renew_connection():
     with Controller.from_port(port = 9051) as controller:
@@ -23,10 +25,15 @@ def get_ip():
     PROXY = "socks5://localhost:9050"  # IP:PORT or HOST:PORT
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument('--proxy-server=%s' % PROXY)
+    chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3')
     driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
     driver.get("http://httpbin.org/ip")
-    ip = driver.find_element(By.XPATH, "/html/body/pre").text.split(":")[-1]
-    ip = ip.replace("\"", "")
+    element = WebDriverWait(driver, 5).until(
+        EC.presence_of_element_located((By.XPATH, "/html/body"))
+    )
+    ip = element.text.split(":")[-1].replace("\"", "").replace("}", "").replace("\n", "")
+    print("IP Address:", ip)
+
     driver.close()
     return(ip)
 
@@ -66,7 +73,9 @@ def scrape_account(accounts, links_subdir, text_subdir, chromedriver_dir):
         PROXY = "socks5://localhost:9050"  # IP:PORT or HOST:PORT
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument('--proxy-server=%s' % PROXY)
+        chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3')
         driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
+        #driver.get("http://httpbin.org/ip")
         for n in tqdm(range(len(urls))):
             url = urls[n]            
             if url in URL:
@@ -75,12 +84,15 @@ def scrape_account(accounts, links_subdir, text_subdir, chromedriver_dir):
             try:
                 driver.get(url)  # Navigates to the supplied URL
                 for count in range(6):
-                    if len(driver.find_elements(By.CLASS_NAME, 'common_share_title')) > 0 or len(driver.find_elements(By.CLASS_NAME, 'rich_media_title')) > 0:
+                    if len(driver.find_elements(By.CLASS_NAME, 'common_share_title')) > 0 or len(driver.find_elements(By.CLASS_NAME, 'rich_media_title')) > 0 or len(driver.find_elements(By.CLASS_NAME, 'weui-msg__title')) > 0:
                         break
                     else:
                         time.sleep(2)
                     if count % 2 == 1:
-                        driver.get(url)        
+                        driver.get(url)
+                if len(driver.find_elements(By.CLASS_NAME, 'weui-msg__title')) > 0:
+                    print("Content has been deleted")
+                    continue        
                 if len(driver.find_elements(By.CSS_SELECTOR, "#js_article > div.rich_media_area_primary.video_channel.rich_media_area_primary_full")) > 0:
                     title.append(driver.find_element(By.CLASS_NAME, "common_share_title").text)
                     meta.append(driver.find_element(By.CLASS_NAME, "flex_context").text)
@@ -88,13 +100,23 @@ def scrape_account(accounts, links_subdir, text_subdir, chromedriver_dir):
                 else:
                     title.append(driver.find_element(By.CLASS_NAME, "rich_media_title").text)
                     meta.append(driver.find_element(By.CLASS_NAME, "rich_media_meta_list").text)
-                    text.append(driver.find_element(By.CLASS_NAME, "rich_media_content").text)
+                    if len(driver.find_elements(By.CLASS_NAME, "rich_media_content")) > 0:
+                        text.append(driver.find_element(By.CLASS_NAME, "rich_media_content").text)
+                    elif len(driver.find_elements(By.CLASS_NAME, "js_underline_content")) > 0:
+                        text.append(driver.find_element(By.CLASS_NAME, "js_underline_content").text)
+                    else:
+                        text.append(np.nan)
             except Exception as e:
                 print(e)
+                print(url)
                 title.append(np.nan)
                 meta.append(np.nan)
                 text.append(np.nan)
             URL.append(url)
+            #print(len(title))
+            #print(len(meta))
+            #print(len(text))
+            #print(len(URL))
             dat = pd.DataFrame({"ID": list(range(len(title))),
                                 "Title": title,
                                 "Meta": meta,

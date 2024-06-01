@@ -12,6 +12,8 @@ from stem.control import Controller
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
+from webdriver_manager.chrome import ChromeDriverManager
+
 
 def renew_connection():
     with Controller.from_port(port = 9051) as controller:
@@ -34,7 +36,6 @@ def scrape_text(name, link_subdir, text_subdir, chromedriver_dir):
         df_text = df_text[df_text.Text.notnull()]
         if len(df_text) == len(df_link):
             print("skipped " + name)
-            continue
         else:
             title = [x for x in df_text.Title.values]
             meta = [x for x in df_text.Meta.values]
@@ -95,18 +96,15 @@ def scrape_text(name, link_subdir, text_subdir, chromedriver_dir):
         driver.close()
 
 def get_ip():
-    PROXY = "socks5://localhost:9050" # IP:PORT or HOST:PORT
-    options = webdriver.ChromeOptions()
-    options.add_argument('--proxy-server=%s' % PROXY)
-    service = ChromeService(executable_path=chromedriver_dir)
-    browser = webdriver.Chrome(service = service, options = options)
-    browser.get("http://httpbin.org/ip")
-    ip = browser.find_element(By.XPATH, "/html/body/pre").text.split(":")[-1]
+    PROXY = "socks5://localhost:9050"  # IP:PORT or HOST:PORT
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument('--proxy-server=%s' % PROXY)
+    chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3')
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
+    driver.get("http://httpbin.org/ip")
+    ip = driver.find_element(By.XPATH, "/html/body/pre").text.split(":")[-1]
     ip = ip.replace("\"", "")
-    #time.sleep(1)
-    renew_connection()
-    #time.sleep(1)
-    browser.close()
+    driver.close()
     return(ip)
 
 def test_ip():
@@ -124,7 +122,7 @@ if __name__ == "__main__":
     #link_subdir = "02_links"
     #text_subdir = "03_text"
     #os.chdir(directory)
-    chromedriver_dir = '/usr/local/bin/chromedriver'
+    chromedriver_dir = '/usr/bin/chromedriver'
     #files = os.listdir(link_subdir)
     #accounts = pd.read_excel("01_metadata/wechat_metadata.xlsx")
     #names = accounts.Chinese.values
