@@ -1,5 +1,4 @@
 from mitmproxy import http, ctx
-import logging
 
 class Requests:
     def load(self, loader):
