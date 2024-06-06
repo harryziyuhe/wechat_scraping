@@ -6,6 +6,9 @@ class Requests:
     
     def request(self, flow: http.HTTPFlow) -> None:
         target = {"weixin", "__biz=", "key="}
+        f = open("C:\\Users\\vboxuser\\Documents\\key.txt", "w")
+        f.write(flow.request.url)
+        f.close()
         if all(req in flow.request.url for req in target):
             f = open("C:\\Users\\vboxuser\\Documents\\key.txt", "w")
             url = flow.request.url
