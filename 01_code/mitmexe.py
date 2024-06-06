@@ -9,7 +9,7 @@ class Requests:
     def request(self, flow: http.HTTPFlow) -> None:
         notification = Notify()
         notification.title = "Found"
-        notification.message = "Found it"
+        notification.message = flow.request.url
         target = {"weixin", "__biz=", "key="}
         if all(req in flow.request.url for req in target):
             notification.send()
