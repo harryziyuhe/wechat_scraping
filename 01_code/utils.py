@@ -2,18 +2,18 @@ import pyautogui
 import time
 
 def retrieve_key():
-    f = open("/home/harry/Dropbox/wechat/01_code/key.txt", "r")
+    f = open("/home/harry/GitHub/wechat_scraping/01_code/key.txt", "r")
     url = f.read()
     return url
 
 
 def click_account(account_name, biz, exp_key=""):
     account_lst = {
-        "环球时报": "/home/harry/Dropbox/wechat/01_code/global_times.png",
-        "新华网": "/home/harry/Dropbox/wechat/01_code/xinhua_news.png"
+        "环球时报": "/home/harry/GitHub/wechat_scraping/01_code/global_times.png",
+        "新华网": "/home/harry/GitHub/wechat_scraping/01_code/xinhua_news.png"
     }
     header_lst = {
-        "环球时报": "/home/harry/Dropbox/wechat/01_code/global_times_header.png",
+        "环球时报": "/home/harry/GitHub/wechat_scraping/01_code/global_times_header.png",
     }
 
     #keep clicking until __biz matches and key is new key

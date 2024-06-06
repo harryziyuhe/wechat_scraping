@@ -7,7 +7,7 @@ class Requests:
     def request(self, flow: http.HTTPFlow) -> None:
         target = {"weixin", "__biz=", "key="}
         if all(req in flow.request.url for req in target):
-            f = open("/home/harry/Dropbox/wechat/01_code/key.txt", "w")
+            f = open("Z:\key.txt", "w")
             url = flow.request.url
             try:
                 f.write(url)
