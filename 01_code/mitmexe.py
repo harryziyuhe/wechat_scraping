@@ -1,19 +1,13 @@
 from mitmproxy import http, ctx
-from notifypy import Notify
-
 
 class Requests:
     def load(self, loader):
         ctx.options.http2 = False
     
     def request(self, flow: http.HTTPFlow) -> None:
-        notification = Notify()
-        notification.title = "Found"
-        notification.message = flow.request.url
         target = {"weixin", "__biz=", "key="}
         if all(req in flow.request.url for req in target):
-            notification.send()
-            f = open("Z:\key.txt", "w")
+            f = open("Z:\\key.txt", "w")
             url = flow.request.url
             try:
                 f.write(url)
