@@ -1,4 +1,5 @@
 from mitmproxy import http, ctx
+import logging
 
 class Requests:
     def load(self, loader):
@@ -6,6 +7,7 @@ class Requests:
     
     def request(self, flow: http.HTTPFlow) -> None:
         target = {"weixin", "__biz=", "key="}
+        logging.info(flow.request.url)
         f = open("C:\\Users\\vboxuser\\Downloads\\key.txt", "w")
         f.write(flow.request.url)
         f.close()
