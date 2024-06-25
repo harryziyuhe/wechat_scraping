@@ -9,15 +9,28 @@ from tqdm import tqdm
 from utils import click_account
 import random
 
-def get_url(name, biz, uin, key, start_timestamp = 0, start_count = 0, end_count = sys.maxsize, return_flag = False):
+def getHead(biz, uin, key, pass_ticket):
+    cookie = utils.retrieve_cookie()
+    return {
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "Connection": "keep-alive",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; 64) AppleWebKit/537.36 (KHMTL, like Gecko) Chrome/116.0.0.0 Safari/537.36 NetType/WIFI MicroMessenger/7.0.20.1781(0x6700143B) WindowsWechat(0x6309092b) XWEB/9053 Flue",
+        "Cookie": cookie,
+        "Referer": f"https://mp.weixin.qq.com/mp/profile_ext?action=home&lang=zh_CN&__biz=${biz}&uin=${uin}&key=${key}&pass_ticket=${pass_ticket}",
+        "Origin": "https://mp.weixin.qq.com"
+    }
+
+def get_url(name, biz, uin, key, pass_ticket, start_timestamp = 0, start_count = 0, end_count = sys.maxsize, return_flag = False):
     lst = []
     flag = True
     try:
         while True:
-            res = scrape_urls(biz, uin, key, offset = start_count)
+            print("getting url for ", name)
+            res = scrape_urls(biz, uin, key, pass_ticket, offset = start_count)
+            print("links:", res)
             if res == []:
-                key, pass_ticket = utils.click_account(account_name = name, biz = biz, exp_key = key)
-                res = scrape_urls(biz, uin, key, offset = start_count)
+                uin, key, pass_ticket = click_account(account_name = name, biz = biz, exp_key = key)
+                res = scrape_urls(biz, uin, key, pass_ticket, offset = start_count)
                 if res == []:
                     subprocess.Popen(['notify-send -u critical', "Scraping Finished"])
                     break
@@ -38,8 +51,10 @@ def get_url(name, biz, uin, key, start_timestamp = 0, start_count = 0, end_count
     finally:
         return lst
 
-def scrape_urls(biz, uin, key, offset = "0", cookie = "", proxies = {"http": None, "https": None}):
-    s = requests.session()
+def scrape_urls(biz, uin, key, pass_ticket, offset = "0", cookie = "", proxies = {"http": None, "https": None}):
+    #s = requests.session()
+    #print("open scrape session")
+    #print(biz, uin, key)
     headers = {"Cookies": cookie}
     params = {
         "action": "getmsg",
@@ -52,10 +67,14 @@ def scrape_urls(biz, uin, key, offset = "0", cookie = "", proxies = {"http": Non
         "pass_ticket": pass_ticket,
         "offset": str(offset)
     }
+    print("parameters: ", params)
     origin_url = "https://mp.weixin.qq.com/mp/profile_ext"
-    msg_json = s.get(
-        origin_url, params = params, headers = headers, proxies = proxies
-    ).json()
+    full_url = f"{origin_url}?action=getmsg&f=json&count=20&is_ok=1&__biz={biz}&key={key}&uin={uin}&pass_ticket={pass_ticket}&offset={offset}"
+    print(full_url)
+    msg_json = requests.get(full_url, headers=getHead(biz, uin, key, pass_ticket), verify=False)
+    #msg_json = s.get(
+    #    origin_url, params = params, headers = headers, proxies = proxies
+    #).json()
     print(params)
     if "general_msg_list" in msg_json.keys():
         lst = [
@@ -102,6 +121,7 @@ def save_to_csv(df_link = [], lst = [], name = "Untitled", loc = None):
 def wechat_scrape(biz = None, name = None, uin = None, loc = None):
     df_link = pd.DataFrame(columns = ["url", "title", "date"])
     timestamp = 0
+    print("scraping", name)
     if name + ".csv" in files:
         file_path = "{}/{}.csv".format(link_subdir, name)
         df_link = pd.read_csv(file_path)
@@ -113,16 +133,16 @@ def wechat_scrape(biz = None, name = None, uin = None, loc = None):
             print(name, "has already been scraped")
             return
     subprocess.Popen(['notify-send', "Started Scraping " + name])
-    key = click_account(account_name = name, biz = biz)
+    uin, key, pass_ticket = click_account(account_name = name, biz = biz)
     try:
-        max_page = get_maxpage(biz, uin, key)
-        print(max_page)
+        
         lst = get_url(name = name,
                       biz = biz,
                       uin = uin,
                       key = key,
-                      start_timestamp = timestamp,
-                      end_count = max_page)
+                      pass_ticket = pass_ticket,
+                      start_timestamp = timestamp)
+        print("return url list: ", lst)
         if len(lst) == 0:
             subprocess.Popen(['notify-send', "No articles found"])
             return
@@ -152,12 +172,12 @@ if __name__ == "__main__":
     directory = os.path.dirname(os.getcwd()) + "/02_data"
     link_subdir = "02_links"
     os.chdir(directory)
-    print(os.getcwd())
+    #print(os.getcwd())
     files = os.listdir(link_subdir)
     accounts = pd.read_excel("01_metadata/wechat_metadata.xlsx")
     names = accounts.Chinese.values
     bizs = accounts.biz.values
-    uin = "MjI5NDM5NTYy"
+    uin = "MjI5NDM5NTYy=="
     for (name, biz) in zip(names, bizs):
         #print(name)
         if name != "环球时报":

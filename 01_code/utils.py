@@ -2,18 +2,23 @@ import pyautogui
 import time
 
 def retrieve_key():
-    f = open("/home/harry/GitHub/wechat_scraping/01_code/key.txt", "r")
+    f = open("/home/harry/Documents/GitHub/wechat_scraping/01_code/key.txt", "r")
     url = f.read()
     return url
+
+def retrieve_cookie():
+    f = open("/home/harry/Documents/GitHub/wechat_scraping/01_code/cookie.txt", "r")
+    cookie = f.read()
+    return cookie
 
 
 def click_account(account_name, biz, exp_key=""):
     account_lst = {
-        "环球时报": "/home/harry/GitHub/wechat_scraping/01_code/global_times.png",
-        "新华网": "/home/harry/GitHub/wechat_scraping/01_code/xinhua_news.png"
+        "环球时报": "/home/harry/Documents/GitHub/wechat_scraping/01_code/global_times.png",
+        "新华网": "/home/harry/Documents/GitHub/wechat_scraping/01_code/xinhua_news.png"
     }
     header_lst = {
-        "环球时报": "/home/harry/GitHub/wechat_scraping/01_code/global_times_header.png",
+        "环球时报": "/home/harry/Documents/GitHub/wechat_scraping/01_code/global_times_header.png",
     }
 
     #keep clicking until __biz matches and key is new key
@@ -30,20 +35,21 @@ def click_account(account_name, biz, exp_key=""):
         pyautogui.click(x, y)
         time.sleep(3)
         url = retrieve_key()
+        uin = url.split("uin=")[1].split("&")[0]
         key = url.split("key=")[1].split("&")[0]
-        pass_ticket = url.split("pass_ticket")[1].split("&")[0]
+        pass_ticket = url.split("pass_ticket=")[1].split("&")[0]
         #print(key)
         if (biz in url) and (key != exp_key):
-            return key, pass_ticket
+            return uin, key, pass_ticket
         y = y + 50
 
 def click_links(account_name):
     account_lst = {
-        "环球时报": "/home/harry/Dropbox/wechat/01_code/global_times.png",
-        "新华网": "/home/harry/Dropbox/wechat/01_code/xinhua_news.png"
+        "环球时报": "/home/harry/Documents/GitHub/wechat_scraping/01_code/global_times.png",
+        "新华网": "/home/harry/Documents/GitHub/wechat_scraping/01_code/xinhua_news.png"
     }
     header_lst = {
-        "环球时报": "/home/harry/Dropbox/wechat/01_code/global_times_header.png",
+        "环球时报": "/home/harry/Documents/GitHub/wechat_scraping/01_code/global_times_header.png",
     }
     input("Please confirm scraping set up is ready by pressing enter...")
     x, y = pyautogui.locateOnScreen(header_lst[account_name])
