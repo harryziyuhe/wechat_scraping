@@ -30,7 +30,7 @@ def click_account(account_name, biz, exp_key=""):
         except Exception as e:
             print(e)
         x, y = pyautogui.locateOnScreen(header_lst[account_name])
-    y = y + 200
+    y = y + 300
     while True:
         pyautogui.click(x, y)
         time.sleep(3)
@@ -38,8 +38,8 @@ def click_account(account_name, biz, exp_key=""):
         uin = url.split("uin=")[1].split("&")[0]
         key = url.split("key=")[1].split("&")[0]
         pass_ticket = url.split("pass_ticket=")[1].split("&")[0]
-        #print(key)
-        if (biz in url) and (key != exp_key):
+        print(exp_key, key)
+        if (biz in url.replace("%3D", "=")) and (key != exp_key):
             return uin, key, pass_ticket
         y = y + 50
 

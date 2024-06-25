@@ -2,7 +2,7 @@ class Requests:
 
     def request(self, flow):
         #print(flow.request.url)
-        target = {"weixin", "s?__biz=", "key="}
+        target = {"weixin", "__biz=", "key=", "uin="}
         #with open("/Users/ziyuhe/Documents/debuglog.txt", "a") as k:
             #k.write(flow.request.url + "\n")
         if all(req in flow.request.url for req in target):

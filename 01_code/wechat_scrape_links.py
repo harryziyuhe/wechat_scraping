@@ -52,7 +52,7 @@ def get_url(name, biz, uin, key, pass_ticket, start_timestamp = 0, start_count =
         return lst
 
 def scrape_urls(biz, uin, key, pass_ticket, offset = "0", cookie = "", proxies = {"http": None, "https": None}):
-    #s = requests.session()
+    s = requests.session()
     #print("open scrape session")
     #print(biz, uin, key)
     headers = {"Cookies": cookie}
@@ -71,11 +71,16 @@ def scrape_urls(biz, uin, key, pass_ticket, offset = "0", cookie = "", proxies =
     origin_url = "https://mp.weixin.qq.com/mp/profile_ext"
     full_url = f"{origin_url}?action=getmsg&f=json&count=20&is_ok=1&__biz={biz}&key={key}&uin={uin}&pass_ticket={pass_ticket}&offset={offset}"
     print(full_url)
-    msg_json = requests.get(full_url, headers=getHead(biz, uin, key, pass_ticket), verify=False)
-    #msg_json = s.get(
-    #    origin_url, params = params, headers = headers, proxies = proxies
-    #).json()
-    print(params)
+    f = open("url.txt", "w")
+    f.write(full_url)
+    f.close()
+    print(full_url)
+    #msg_json = requests.get(full_url, headers=getHead(biz, uin, key, pass_ticket), verify=False)
+    #print(msg_json)
+    msg_json = s.get(
+        origin_url, params = params, headers = headers, proxies = proxies
+    ).json()
+    print(msg_json)
     if "general_msg_list" in msg_json.keys():
         lst = [
             item
