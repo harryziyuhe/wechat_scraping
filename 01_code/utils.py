@@ -11,7 +11,6 @@ def retrieve_cookie():
     cookie = f.read()
     return cookie
 
-
 def click_account(account_name, biz, exp_key=""):
     account_lst = {
         "环球时报": "/home/harry/Documents/GitHub/wechat_scraping/01_code/global_times.png",
