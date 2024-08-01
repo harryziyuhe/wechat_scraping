@@ -6,7 +6,7 @@ from datetime import datetime
 import requests
 import sys
 from tqdm import tqdm
-from utils import click_account
+import utils
 import random
 
 def getHead(biz, uin, key, pass_ticket):
@@ -29,7 +29,7 @@ def get_url(name, biz, uin, key, pass_ticket, start_timestamp = 0, start_count =
             res = scrape_urls(biz, uin, key, pass_ticket, offset = start_count)
             print("links:", res)
             if res == []:
-                uin, key, pass_ticket = click_account(account_name = name, biz = biz, exp_key = key)
+                uin, key, pass_ticket = utils.click_account(account_name = name, biz = biz, exp_key = key)
                 res = scrape_urls(biz, uin, key, pass_ticket, offset = start_count)
                 if res == []:
                     subprocess.Popen(['notify-send -u critical', "Scraping Finished"])
