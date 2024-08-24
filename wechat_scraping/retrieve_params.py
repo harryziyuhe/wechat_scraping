@@ -1,5 +1,4 @@
 import subprocess
-import threading
 
 def setProxy(proxy_server, enable = True):
     #proxy_server input should include ip and port number, e.g. "192.168.1.1:8080" 
@@ -75,8 +74,13 @@ def stopProxy():
     clearProxy()  # Always clear proxy settings
 
 if __name__ == "__main__":
+    quiet = input("Do you want to run mitmproxy in quiet mode?Y/n: ").upper()
+    if (quiet == "N") or (quiet == "No"):
+        quiet = False
+    else:
+        quiet = True
     try:
-        proxyThread()
+        proxyThread(port = '8888', quiet = quiet)
         mitmprocess.wait()
     except:
         stopProxy()

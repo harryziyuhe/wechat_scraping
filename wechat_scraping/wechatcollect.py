@@ -1,4 +1,3 @@
-import wechat_scrape_links
 import os
 from utils import *
 import requests
@@ -151,9 +150,17 @@ def run(tor = True):
             print("Detecting")
             continue
 
+    with open("offset.json", "r", encoding="utf-8") as json_file:
+        offset_dict = json.load(json_file)
+    
+    if account_name not in offset_dict:
+        offset_dict[account_name] = 0
+        offset_plus = 0
+    else:
+        offset_plus = offset_dict[account_name]
+    
     if os.path.exists(f"data/{account_name}.csv"):
-        df_article = pd.read_csv(f"data/{account_name}.csv")
-        offset_plus = len(df_article)
+        df_article = pd.read_csv(f"data/{account_name}.csv", index_col=None)
     else:
         df_article = pd.DataFrame(columns = ["author", "title", "content", "link", "read", "like", "time"])
     
@@ -174,10 +181,14 @@ def run(tor = True):
                 print(f"Scrape Error: {entry}")
             if flag == "Scraped":
                 offset += offset_plus
+                offset_plus = 1
                 break
             offset += 1
-            df_article.to_csv(f"data/{account_name}.csv")
-        if (continue_flag == 0) or (offset >= 1):
+            df_article.to_csv(f"data/{account_name}.csv", index=False)
+            offset_dict[account_name] = offset
+            with open('offset.json', 'w') as json_file:
+                json.dump(offset_dict, json_file)
+        if (continue_flag == 0) or (offset > 200):
             print(f"Article collection completed. {count} articles collected.")
             break
         time.sleep(random.randint(2, 5))

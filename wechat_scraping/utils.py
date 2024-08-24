@@ -57,7 +57,7 @@ def get_tor_session(tor = True):
     # Tor uses the 9050 port as the default socks port
     tor_count = (tor_count + 1) % 5
     if tor:
-        if tor == 0:
+        if tor_count == 0:
             renew_connection()
         session.proxies = {'http':  'socks5://127.0.0.1:9050',
                            'https': 'socks5://127.0.0.1:9050'}

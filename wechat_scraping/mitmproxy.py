@@ -5,8 +5,13 @@ from urllib.parse import urlparse, parse_qs
 class Requests:
 
     def request(self, flow):
-        target = "getappmsgext"
-        if target in flow.request.url:
+        # The mitm code will fuction when if we set target = "getappmsgext", but during the scraping process 
+        # the one time parameters will be overwritten because mitmproxy will detect other urls with "getappmsgext"
+        # that do not include the parameters we need, so to avoid this confusion we can set target to a list
+        # that includes other key parameter names as well.
+        # target = "getappmsgext"
+        target = ["getappmsgext", "biz", "key", "pass_ticket"]
+        if all(keyword in flow.request.url for keyword in target):
             
             # read cookie
             cookie = ""
