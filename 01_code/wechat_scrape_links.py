@@ -138,7 +138,7 @@ def wechat_scrape(biz = None, name = None, uin = None, loc = None):
             print(name, "has already been scraped")
             return
     subprocess.Popen(['notify-send', "Started Scraping " + name])
-    uin, key, pass_ticket = click_account(account_name = name, biz = biz)
+    uin, key, pass_ticket = utils.click_account(account_name = name, biz = biz)
     try:
         
         lst = get_url(name = name,
