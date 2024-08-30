@@ -1,11 +1,11 @@
-#import pyautogui
-#import time
-#import os
-#import json
-#from stem import Signal
-#from stem.control import Controller
-#import requests
-#import pandas as pd
+import pyautogui
+import time
+import os
+import json
+from stem import Signal
+from stem.control import Controller
+import requests
+import pandas as pd
 
 PROXY = "socks5://localhost:9050"
 
