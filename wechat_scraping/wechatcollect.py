@@ -3,6 +3,7 @@ from utils import *
 import requests
 import re
 import datetime
+import urllib3
 from urllib.parse import urlparse, parse_qs
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -15,6 +16,7 @@ offset = 0
 count = 0
 df_article = None
 continue_flag = 1
+urllib3.disable_warnings()
 
 def get_params():
     global global_params
@@ -53,6 +55,7 @@ def parse_entry(user: UserData, article_detail: ArticleData, entry, tor = True):
     global count
     if "app_msg_ext_info" in entry:
         entry = entry["app_msg_ext_info"]
+        print(entry)
         flag = get_article(user, article_detail, entry, tor)
         if flag == "LinkError":
             print(f"Link Error: {entry}")

@@ -59,8 +59,9 @@ def setProxy(proxy_server):
         
         # Enable system-wide proxy via registry modifications
         print("Enabling proxy...")
-        cmd_open = 'reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v Proxy Enable /t REG_DWORD /d 1 /f'
-        cmd_proxy = f'reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyServer /t REG_SZ /d "{proxy_ip}:{proxy_port}" /f'
+        cmd_open = 'reg add \"HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\" /v ProxyEnable /t REG_DWORD /d 1 /f'
+        cmd_proxy = f'reg add \"HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\" /v ProxyServer /t REG_SZ /d "{proxy_ip}:{proxy_port}" /f'
+        print(cmd_open)
         subprocess.call(cmd_open, shell=True)
         subprocess.call(cmd_proxy, shell=True)
         
@@ -112,7 +113,7 @@ def clearProxy():
 
         # Disable proxy settings via registry modification
         print("Disabling proxy on Windows...")
-        cmd_close = 'reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v Proxy Enable /t REG_DWORD /d 0 /f'
+        cmd_close = 'reg add \"HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\" /v ProxyEnable /t REG_DWORD /d 0 /f'
         subprocess.call(cmd_close, shell=True)
         print("Proxy settings cleared.")
 

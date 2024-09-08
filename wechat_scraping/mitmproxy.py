@@ -1,6 +1,26 @@
 import json
-from utils import UserData
 from urllib.parse import urlparse, parse_qs
+
+class UserData:
+    def __init__(self, biz, uin, key, pass_ticket, cookie):
+        self.biz = biz
+        self.uin = uin
+        self.key = key
+        self.pass_ticket = pass_ticket
+        self.cookie = cookie
+    
+    def toJson(self):
+        return {
+            "biz": self.biz,
+            "uin": self.uin,
+            "key": self.key,
+            "pass_ticket": self.pass_ticket,
+            "cookie": self.cookie
+        }
+    
+    @staticmethod
+    def fromJson(data):
+        return UserData(data['biz'], data['uin'], data['key'], data['pass_ticket'], data['cookie'])
 
 class Requests:
 
@@ -36,7 +56,7 @@ class Requests:
                 print(e)
             user = UserData(biz, uin, key, pass_ticket, cookie)
 
-            with open("params.json", mode="w", encoding="utf-8") as f:
+            with open("Z:\\params.json", mode="w", encoding="utf-8") as f:
                 f.write(json.dumps(user.toJson(), indent = 4))
 
 addons = [
