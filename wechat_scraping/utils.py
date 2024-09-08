@@ -49,7 +49,8 @@ class ArticleData:
         self.link = ""
         self.read = ""
         self.like = ""
-        self.time = ""
+        self.pub_time = ""
+        self.scrape_time = ""
 
 def get_tor_session(tor = True):
     global tor_count

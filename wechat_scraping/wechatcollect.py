@@ -55,7 +55,7 @@ def parse_entry(user: UserData, article_detail: ArticleData, entry, tor = True):
     global count
     if "app_msg_ext_info" in entry:
         entry = entry["app_msg_ext_info"]
-        print(entry)
+        #print(entry)
         flag = get_article(user, article_detail, entry, tor)
         if flag == "LinkError":
             print(f"Link Error: {entry}")
@@ -100,6 +100,9 @@ def get_content(article_detail: ArticleData, tor = True):
     if article_text is None:
         article_text = soup.find(id="page_content")
     
+    if article_text is None:
+        article_text = soup.find(id="page-content")
+
     if article_text:
         article_text = article_text.get_text()
     else:
@@ -115,7 +118,7 @@ def get_content(article_detail: ArticleData, tor = True):
         timestamp = int(match.group(1))
         # Convert the timestamp to a datetime object
         create_time = datetime.datetime.fromtimestamp(timestamp)
-    article_detail.time = create_time
+    article_detail.pub_time = create_time
 
 def get_stats(article_detail: ArticleData, user: UserData, tor = True):
     session = get_tor_session(tor)
@@ -133,13 +136,15 @@ def get_stats(article_detail: ArticleData, user: UserData, tor = True):
         like_num = info['old_like_num']
         article_detail.read = read_num
         article_detail.like = like_num
+    article_detail.scrape_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-def run(tor = True):
+def run(tor = True, day_max = 2000):
     global global_params
     global offset
     global count
     global df_article
     global continue_flag
+    start_time = time.time()
     initialize()
     while True:
         get_params()
@@ -152,6 +157,18 @@ def run(tor = True):
             time.sleep(1)
             print("Detecting")
             continue
+    
+    if os.path.exists("log.json"):
+        with open("log.json", "r") as log_file:
+            scrape_log = json.load(log_file)
+            if scrape_log['last_scrape'] != datetime.date.today():
+                scrape_log['last_scrape'] = datetime.date.today()
+                scrape_log['scrape_count'] = 0
+    else:
+        scrape_log = {
+            "last_scrape": datetime.date.today(),
+            "scrape_count": 0
+        }
 
     with open("offset.json", "r", encoding="utf-8") as json_file:
         offset_dict = json.load(json_file)
@@ -191,9 +208,14 @@ def run(tor = True):
             offset_dict[account_name] = offset
             with open('offset.json', 'w') as json_file:
                 json.dump(offset_dict, json_file)
+        if ((count + scrape_log['scrape_count']) > day_max):
+            scrape_log['scrape_count'] += count
+            with open("log.json", "w") as log_file:
+                json.dump(scrape_log, log_file)
         if (continue_flag == 0) or (offset > 200):
             print(f"Article collection completed. {count} articles collected.")
             break
+        print(f"Time elapsed: {(time.time() - start_time):.2f} seconds, {count} articles scraped")
         time.sleep(random.randint(2, 5))
 
 ##################################################################
