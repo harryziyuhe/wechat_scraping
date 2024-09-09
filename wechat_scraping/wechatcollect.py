@@ -84,8 +84,14 @@ def get_article(user: UserData, article_detail: ArticleData, entry, tor = True):
         return("LinkError")
     if check_existing(article_detail):
         return("Scraped")
-    get_content(article_detail, tor)
-    get_stats(article_detail, user, tor)
+    try:
+        get_content(article_detail, tor)
+    except Exception as e:
+        print(f"Scrape Content Error. Title: {entry['title']}, link: {entry['content_url'].replace("amp;", "")}, error message: {e}")
+    try:
+        get_stats(article_detail, user, tor)
+    except Exception as e:
+        print(f"Scrape Stats Error. Title: {entry['title']}, link: {entry['content_url'].replace("amp;", "")}, error message: {e}")
     df_article = pd.concat([df_article, pd.DataFrame([vars(article_detail)])], ignore_index=True)
     time.sleep(random.randint(2,5))
     
@@ -161,14 +167,18 @@ def run(tor = True, day_max = 2000):
     if os.path.exists("log.json"):
         with open("log.json", "r") as log_file:
             scrape_log = json.load(log_file)
-            if scrape_log['last_scrape'] != datetime.date.today():
-                scrape_log['last_scrape'] = datetime.date.today()
+            if scrape_log['last_scrape'] != datetime.date.today().isoformat():
+                scrape_log['last_scrape'] = datetime.date.today().isoformat()
                 scrape_log['scrape_count'] = 0
+                start_count = 0
+            else:
+                start_count = scrape_log['scrape_count']
     else:
         scrape_log = {
-            "last_scrape": datetime.date.today(),
+            "last_scrape": datetime.date.today().isoformat(),
             "scrape_count": 0
         }
+        start_count = 0
 
     with open("offset.json", "r", encoding="utf-8") as json_file:
         offset_dict = json.load(json_file)
@@ -187,10 +197,12 @@ def run(tor = True, day_max = 2000):
     while True:
         url_list = get_links(global_params, tor)
         if len(url_list) == 0:
-            #refresh()
-            #url_list = get_links(global_params, tor)
+            refresh()
+            url_list = get_links(global_params, tor)
             if len(url_list) == 0:
                 print("Parameter error, verify account status")
+                print(f"Article collection ended. {count} articles collected.")
+                break
         for entry in url_list:
             article_detail = ArticleData()
             flag = ""
@@ -209,13 +221,14 @@ def run(tor = True, day_max = 2000):
             with open('offset.json', 'w') as json_file:
                 json.dump(offset_dict, json_file)
         if ((count + scrape_log['scrape_count']) > day_max):
-            scrape_log['scrape_count'] += count
-            with open("log.json", "w") as log_file:
-                json.dump(scrape_log, log_file)
+            break
         if (continue_flag == 0) or (offset > 200):
             print(f"Article collection completed. {count} articles collected.")
             break
         print(f"Time elapsed: {(time.time() - start_time):.2f} seconds, {count} articles scraped")
+        scrape_log['scrape_count'] = start_count + count
+        with open("log.json", "w") as log_file:
+            json.dump(scrape_log, log_file)
         time.sleep(random.randint(2, 5))
 
 ##################################################################
