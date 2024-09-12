@@ -134,14 +134,19 @@ def click_account(account_name, biz, exp_key=""):
             print("detecting")
         y = y + 50
 
-def refresh():
-    refresh_button = "fig/refresh.png"
-    while x is None or y is None:
-        try:
-            x, y = pyautogui.locateOnScreen(refresh_button)
-        except:
-            input("Refresh button not found, verify set up and press enter.")
-    pyautogui.click(x, y)
+def refresh(account_name):
+    # Move to random location to avoid blocking refresh button
+    pyautogui.moveTo(500, 500, duration=0.5)
+    refresh_button = f"fig/{account_name}.png"
+    print(refresh_button)
+    try:
+        location = pyautogui.locateOnScreen(refresh_button)
+        x, y = pyautogui.center(location)
+    except:
+        input("Refresh button not found, verify set up and press enter.")
+    pyautogui.click(x, y + 50)
+    # Move to random location to avoid blocking refresh button
+    pyautogui.moveTo(x + 50, y + 50, duration=0.5)
     
 
 def click_links(account_name):

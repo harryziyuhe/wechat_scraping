@@ -18,21 +18,38 @@ df_article = None
 continue_flag = 1
 urllib3.disable_warnings()
 
-def get_params():
+def get_params(reload = False):
     global global_params
+    global account_name
     if os.path.exists("params.json"):
-        json_params = open("params.json", "r", encoding="utf-8")
-        params = json.load(json_params)
-        global_params = UserData.fromJson(params)
-        json_params.close()
+        os.remove("params.json")
+    if reload:
+        refresh(account_name)
+    while True:
+        if os.path.exists("params.json"):
+            json_params = open("params.json", "r", encoding = "utf-8")
+            params = json.load(json_params)
+            global_params = UserData.fromJson(params)
+            json_params.close()
+            if global_params != None:
+                print("Parameters detected")
+                break
+        print("Detecting")
+        time.sleep(1)
 
 def initialize():
     global offset
     global count
-    if os.path.exists("params.json"):
-        os.remove("params.json")
+    global global_params
+    global account_name
     offset = 0
     count = 0
+    if os.path.exists("params.json"):
+        os.remove("params.json")
+    get_params()
+    account_name = get_account_name(global_params)
+    print(f"Start scraping {account_name}")
+
 
 def get_links(user: UserData, tor = True):
     global continue_flag
@@ -150,19 +167,9 @@ def run(tor = True, day_max = 2000):
     global count
     global df_article
     global continue_flag
+    global account_name
     start_time = time.time()
     initialize()
-    while True:
-        get_params()
-        if global_params != None:
-            print("Parameters detected")
-            account_name = get_account_name(global_params)
-            print(f"Start scraping {account_name}")
-            break
-        else:
-            time.sleep(1)
-            print("Detecting")
-            continue
     
     if os.path.exists("log.json"):
         with open("log.json", "r") as log_file:
@@ -197,7 +204,8 @@ def run(tor = True, day_max = 2000):
     while True:
         url_list = get_links(global_params, tor)
         if len(url_list) == 0:
-            refresh()
+            print("Reloading parameters, please wait...")
+            get_params(reload = True)
             url_list = get_links(global_params, tor)
             if len(url_list) == 0:
                 print("Parameter error, verify account status")
@@ -222,7 +230,7 @@ def run(tor = True, day_max = 2000):
                 json.dump(offset_dict, json_file)
         if ((count + scrape_log['scrape_count']) > day_max):
             break
-        if (continue_flag == 0) or (offset > 200):
+        if (continue_flag == 0):
             print(f"Article collection completed. {count} articles collected.")
             break
         print(f"Time elapsed: {(time.time() - start_time):.2f} seconds, {count} articles scraped")
