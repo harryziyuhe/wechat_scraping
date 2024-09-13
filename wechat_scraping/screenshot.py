@@ -15,6 +15,7 @@ commands = [
     ["git", "push"],
 ]
 
+
 try:
     for command in commands:
         result = subprocess.run(command, check=True, capture_output=True, text=True)
