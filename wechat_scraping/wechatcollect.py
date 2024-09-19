@@ -228,7 +228,7 @@ def run(tor = True, day_max = 2000):
                 print(f"Scrape Error: {entry}")
             if flag == "Scraped":
                 offset += offset_plus
-                offset_plus = 1
+                offset_plus = 0
                 break
             offset += 1
             df_article.to_csv(f"data/{account_name}.csv", index=False)
