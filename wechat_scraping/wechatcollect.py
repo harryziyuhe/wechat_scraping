@@ -233,7 +233,7 @@ def run(tor = True, day_max = 2000):
                 else:
                     offset = offset + offset_plus - 1
                     offset_plus = 1
-                break
+                    break
             offset += 1
             df_article.to_csv(f"data/{account_name}.csv", index=False)
             offset_dict[account_name] = offset
