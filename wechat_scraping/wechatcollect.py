@@ -203,14 +203,21 @@ def run(tor = True, day_max = 2000):
     
     while True:
         url_list = get_links(global_params, tor)
+        # First error detection: automatic refresh
         if len(url_list) == 0:
             print("Reloading parameters, please wait...")
             get_params(reload = True)
             url_list = get_links(global_params, tor)
+            # Second error detection: manual refresh
             if len(url_list) == 0:
-                print("Parameter error, verify account status")
-                print(f"Article collection ended. {count} articles collected.")
-                break
+                input("Awaiting user action. Press any key to continue.")
+                get_params()
+                url_list = get_links(global_params, tor)
+                # Third error detection: break
+                if len(url_list) == 0:
+                    ("Parameter error, verify account status")
+                    print(f"Article collection ended. {count} articles collected.")
+                    break
         for entry in url_list:
             article_detail = ArticleData()
             flag = ""
