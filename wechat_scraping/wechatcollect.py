@@ -53,7 +53,7 @@ def initialize():
 
 def get_links(user: UserData, tor = True):
     global continue_flag
-    url = f"https://mp.weixin.qq.com/mp/profile_ext?action=getmsg&f=json&count=20&is_ok=1&__biz={user.biz}&key={user.key}&uin={user.uin}&pass_ticket={user.pass_ticket}&offset={offset}"
+    url = f"https://mp.weixin.qq.com/mp/profile_ext?action=getmsg&f=json&count=10&is_ok=1&__biz={user.biz}&key={user.key}&uin={user.uin}&pass_ticket={user.pass_ticket}&offset={offset}"
     session = get_tor_session(tor)
     msg_json = session.get(url, headers=user_head(global_params), verify=False).json()
     if (('can_msg_continue' in msg_json) and msg_json['can_msg_continue'] != 1):
@@ -218,6 +218,7 @@ def run(tor = True, day_max = 2000):
                     ("Parameter error, verify account status")
                     print(f"Article collection ended. {count} articles collected.")
                     break
+        first_overlap = True
         for entry in url_list:
             article_detail = ArticleData()
             flag = ""
@@ -227,8 +228,11 @@ def run(tor = True, day_max = 2000):
                 print(e)
                 print(f"Scrape Error: {entry}")
             if flag == "Scraped":
-                offset += offset_plus
-                offset_plus = 0
+                if first_overlap:
+                    first_overlap = False
+                else:
+                    offset = offset + offset_plus - 1
+                    offset_plus = 1
                 break
             offset += 1
             df_article.to_csv(f"data/{account_name}.csv", index=False)
