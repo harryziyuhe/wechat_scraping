@@ -42,6 +42,46 @@ def setProxy(proxy_server):
         subprocess.call(f'networksetup -setwebproxystate {network_service} on'.split())
         subprocess.call(f'networksetup -setsecurewebproxystate {network_service} on'.split())
     
+    elif os_type == "Linux":  # Linux configuration
+
+        # Set the network service name; adjust if needed (e.g., Wi-Fi, Ethernet)
+        network_connection = "Wi-Fi"
+
+        # Check if network service is valid
+        check_cmd = 'nmcli connection show'
+        output = subprocess.run(check_cmd.split(), capture_output=True, text=True)
+        print("Available network connections:")
+        print(output.stdout)
+
+        # Ensure the input network connection exists
+        if network_connection not in output.stdout:
+            print(f"Error: The network connection '{network_connection}' is not valid.")
+            return
+
+        # Base commands to set proxy for HTTP and HTTPS using nmcli
+        cmd_http = f'nmcli connection modify "{network_connection}" proxy.http {proxy_ip}:{proxy_port}'
+        cmd_https = f'nmcli connection modify "{network_connection}" proxy.https {proxy_ip}:{proxy_port}'
+
+        # Enable proxy settings
+        print("Enabling proxy...")
+        subprocess.call(cmd_http.split())
+        subprocess.call(cmd_https.split())
+        subprocess.call(f'nmcli connection up "{network_connection}"'.split())
+
+        # Set environment variables as an additional method
+        print("Setting proxy environment variables...")
+        env_vars = {
+            "http_proxy": f"http://{proxy_ip}:{proxy_port}",
+            "https_proxy": f"https://{proxy_ip}:{proxy_port}",
+            "HTTP_PROXY": f"http://{proxy_ip}:{proxy_port}",
+            "HTTPS_PROXY": f"https://{proxy_ip}:{proxy_port}"
+        }
+
+        for var, value in env_vars.items():
+            set_env_cmd = f'export {var}={value}'
+            subprocess.run(['bash', '-c', set_env_cmd])
+            print(f"Set {var} to {value}")
+
     elif os_type == "Windows": # Windows configuration
         # Set the network service name; adjust if needed (e.g., Wi-Fi, Ethernet)
         network_service = "Ethernet"
