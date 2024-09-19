@@ -232,7 +232,7 @@ def run(tor = True, day_max = 2000):
                     first_overlap = False
                 else:
                     offset = offset + offset_plus - 1
-                    offset_plus = 1
+                    offset_plus = 2
                     break
             offset += 1
             df_article.to_csv(f"data/{account_name}.csv", index=False)
