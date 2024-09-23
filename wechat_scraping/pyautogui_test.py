@@ -4,15 +4,15 @@ import os
 from utils import refresh
 
 # Path to the screenshot image file (template to match on the screen)
-screenshot_path = 'fig/refresh.png'  # Replace with your screenshot file path
+account = input("Please input account name: ")
+screenshot_path = f'fig/{account}.png'  # Replace with your screenshot file path
 
-refresh()
+#refresh()
 
 try:
-    print(os.getcwd())
     # Locate the screenshot element on the screen
     location = pyautogui.locateOnScreen(screenshot_path)
-    
+    print(location)
     if location is not None:
         # Get the center coordinates of the located element
         center_x, center_y = pyautogui.center(location)

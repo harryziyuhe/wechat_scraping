@@ -18,7 +18,7 @@ def setProxy(proxy_server):
     if os_type == "Darwin": # macOS configuration
 
         # Set the network service name; adjust if needed (e.g., Wi-Fi, Ethernet)
-        network_service = "Ethernet"
+        network_service = "Wi-Fi"
 
         # Check if network service is valid
         check_cmd = f'networksetup -listallnetworkservices'
@@ -45,7 +45,7 @@ def setProxy(proxy_server):
     elif os_type == "Linux":  # Linux configuration
 
         # Set the network service name; adjust if needed (e.g., Wi-Fi, Ethernet)
-        network_connection = "Wi-Fi"
+        network_connection = "Ethernet"
 
         # Check if network service is valid
         check_cmd = 'nmcli connection show'

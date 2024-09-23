@@ -110,7 +110,7 @@ def get_article(user: UserData, article_detail: ArticleData, entry, tor = True):
     except Exception as e:
         print(f"Scrape Stats Error. Title: {entry['title']}, link: {entry['content_url'].replace("amp;", "")}, error message: {e}")
     df_article = pd.concat([df_article, pd.DataFrame([vars(article_detail)])], ignore_index=True)
-    time.sleep(random.randint(2,5))
+    time.sleep(random.uniform(2,5))
     
 def get_content(article_detail: ArticleData, tor = True):
     session = get_tor_session(tor)
@@ -128,10 +128,10 @@ def get_content(article_detail: ArticleData, tor = True):
 
     if article_text:
         article_text = article_text.get_text()
+        content = '\n'.join([text.strip() for text in article_text if text.strip()])
     else:
         print("No element was found.")
     
-    content = '\n'.join([text.strip() for text in article_text if text.strip()])
     article_detail.content = content
 
     # get article published date
@@ -155,6 +155,7 @@ def get_stats(article_detail: ArticleData, user: UserData, tor = True):
                              data=article_data(user, mid, sn, idx), verify=False).json()
     if "appmsgstat" in response:
         info = response['appmsgstat']
+        print(info)
         read_num = info['read_num']
         like_num = info['old_like_num']
         article_detail.read = read_num
@@ -232,14 +233,18 @@ def run(tor = True, day_max = 2000):
                     first_overlap = False
                 else:
                     offset = offset + offset_plus - 1
-                    offset_plus = 2
-                    break
+                    if offset_plus > 2:
+                        offset_plus = 2
+                        break
+                    else: 
+                        continue
             offset += 1
             df_article.to_csv(f"data/{account_name}.csv", index=False)
             offset_dict[account_name] = offset
             with open('offset.json', 'w') as json_file:
                 json.dump(offset_dict, json_file)
-        if ((count + scrape_log['scrape_count']) > day_max):
+        if (scrape_log['scrape_count'] > day_max):
+            print(f"Article collection completed. {count} articles collected.")
             break
         if (continue_flag == 0):
             print(f"Article collection completed. {count} articles collected.")
@@ -248,7 +253,7 @@ def run(tor = True, day_max = 2000):
         scrape_log['scrape_count'] = start_count + count
         with open("log.json", "w") as log_file:
             json.dump(scrape_log, log_file)
-        time.sleep(random.randint(2, 5))
+        time.sleep(random.uniform(2, 5))
 
 ##################################################################
 # Pipeline 
