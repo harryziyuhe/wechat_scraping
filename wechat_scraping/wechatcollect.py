@@ -155,10 +155,10 @@ def get_stats(article_detail: ArticleData, user: UserData, tor = True):
                              data=article_data(user, mid, sn, idx), verify=False).json()
     if "appmsgstat" in response:
         info = response['appmsgstat']
-        print(info)
+        #print(info)
         read_num = info['read_num']
-        like_num = info['old_like_num']
         article_detail.read = read_num
+        like_num = info['old_like_num']
         article_detail.like = like_num
     article_detail.scrape_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
