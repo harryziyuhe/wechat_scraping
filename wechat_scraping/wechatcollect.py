@@ -162,7 +162,7 @@ def get_stats(article_detail: ArticleData, user: UserData, tor = True):
         article_detail.like = like_num
     article_detail.scrape_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-def run(tor = True, day_max = 2000):
+def run(tor = True, day_max = 2500):
     global global_params
     global offset
     global count
