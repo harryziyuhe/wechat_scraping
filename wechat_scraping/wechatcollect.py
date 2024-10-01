@@ -78,7 +78,6 @@ def parse_entry(user: UserData, article_detail: ArticleData, entry, tor = True):
             print(f"Link Error: {entry}")
         if flag == "Scraped":
             print("Some articles have been scraped")
-            return flag
         count += 1
         if "multi_app_msg_item_list" in entry:
             sublist = entry["multi_app_msg_item_list"]
@@ -87,12 +86,16 @@ def parse_entry(user: UserData, article_detail: ArticleData, entry, tor = True):
                 flag = get_article(user, article_detail, item, tor)
                 if flag == "LinkError":
                     print(f"Link Error: {item}")
+                if flag == "Scraped":
+                    print("Some sub-articles have been scraped")
                 count += 1
+        return flag
     else:
         print("No title")
 
 def get_article(user: UserData, article_detail: ArticleData, entry, tor = True):
     global df_article
+    flag = ""
     if "title" in entry:
         article_detail.title = entry['title']
         article_detail.link = entry['content_url'].replace("amp;", "")
@@ -100,7 +103,7 @@ def get_article(user: UserData, article_detail: ArticleData, entry, tor = True):
     else:
         return("LinkError")
     if check_existing(article_detail):
-        return("Scraped")
+        flag = "Scraped"
     try:
         get_content(article_detail, tor)
     except Exception as e:
@@ -111,6 +114,7 @@ def get_article(user: UserData, article_detail: ArticleData, entry, tor = True):
         print(f"Scrape Stats Error. Title: {entry['title']}, link: {entry['content_url'].replace("amp;", "")}, error message: {e}")
     df_article = pd.concat([df_article, pd.DataFrame([vars(article_detail)])], ignore_index=True)
     time.sleep(random.uniform(2,5))
+    return flag
     
 def get_content(article_detail: ArticleData, tor = True):
     session = get_tor_session(tor)
