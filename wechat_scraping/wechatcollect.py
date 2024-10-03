@@ -123,13 +123,12 @@ def get_content(article_detail: ArticleData, tor = True):
     soup = BeautifulSoup(response.text, 'html.parser')
 
     # get article content
-    article_text = soup.find(id="js_content")
-    
-    if article_text is None:
-        article_text = soup.find(id="page_content")
-    
-    if article_text is None:
-        article_text = soup.find(id="page-content")
+    article_text = soup.find(id="js_content") or soup.find(id="page_content") or soup.find(id="page-content")
+    is article_text is None:
+        session = get_tor_session(tor)
+        response = session.get(article_detail.link, headers=general_head, verify=False, timeout=20)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        article_text = soup.find(id="js_content") or soup.find(id="page_content") or soup.find(id="page-content")
 
     if article_text:
         article_text = article_text.get_text()
