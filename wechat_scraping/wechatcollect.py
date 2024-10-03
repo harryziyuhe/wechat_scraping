@@ -158,7 +158,7 @@ def get_stats(article_detail: ArticleData, tor = True):
     idx = query_params['idx'][0]
     detailUrl = f"https://mp.weixin.qq.com/mp/getappmsgext?f=json&mock=&fasttmplajax=1&uin={global_params.uin}&key={global_params.key}&pass_ticket={global_params.pass_ticket}"
     response = session.post(detailUrl, headers=user_head(global_params),
-                             data=article_data(global_params, mid, sn, idx), verify=False).json()
+                            data=article_data(global_params, mid, sn, idx), verify=False).json()
     if "appmsgstat" in response:
         info = response['appmsgstat']
         #print(info)
@@ -169,6 +169,15 @@ def get_stats(article_detail: ArticleData, tor = True):
     else:
         print("Reloading parameters, please wait...")
         get_params(reload = True)
+        detailUrl = f"https://mp.weixin.qq.com/mp/getappmsgext?f=json&mock=&fasttmplajax=1&uin={global_params.uin}&key={global_params.key}&pass_ticket={global_params.pass_ticket}"
+        response = session.post(detailUrl, headers=user_head(global_params),
+                                data=article_data(global_params, mid, sn, idx), verify=False).json()
+        if "appmsgstat" in response:
+            info = response['appmsgstat']
+            read_num = info['read_num']
+            article_detail.read = read_num
+            like_num = info['old_like_num']
+            article_detail.like = like_num
 
     article_detail.scrape_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
