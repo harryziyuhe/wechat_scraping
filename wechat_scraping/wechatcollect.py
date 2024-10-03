@@ -124,7 +124,8 @@ def get_content(article_detail: ArticleData, tor = True):
 
     # get article content
     article_text = soup.find(id="js_content") or soup.find(id="page_content") or soup.find(id="page-content")
-    is article_text is None:
+    if article_text is None:
+        print("Reloading content page...")
         session = get_tor_session(tor)
         response = session.get(article_detail.link, headers=general_head, verify=False, timeout=20)
         soup = BeautifulSoup(response.text, 'html.parser')
