@@ -51,9 +51,10 @@ def initialize():
     print(f"Start scraping {account_name}")
 
 
-def get_links(user: UserData, tor = True):
+def get_links(tor = True):
     global continue_flag
-    url = f"https://mp.weixin.qq.com/mp/profile_ext?action=getmsg&f=json&count=10&is_ok=1&__biz={user.biz}&key={user.key}&uin={user.uin}&pass_ticket={user.pass_ticket}&offset={offset}"
+    global global_params
+    url = f"https://mp.weixin.qq.com/mp/profile_ext?action=getmsg&f=json&count=10&is_ok=1&__biz={global_params.biz}&key={global_params.key}&uin={global_params.uin}&pass_ticket={global_params.pass_ticket}&offset={offset}"
     session = get_tor_session(tor)
     msg_json = session.get(url, headers=user_head(global_params), verify=False).json()
     if (('can_msg_continue' in msg_json) and msg_json['can_msg_continue'] != 1):
@@ -67,12 +68,12 @@ def check_existing(article_detail: ArticleData):
     global df_article
     return ((df_article['title'] == article_detail.title) & (df_article['content'] == article_detail.content)).any()
 
-def parse_entry(user: UserData, article_detail: ArticleData, entry, tor = True):
+def parse_entry(article_detail: ArticleData, entry, tor = True):
     global offset
     global count
     if "app_msg_ext_info" in entry:
         entry = entry["app_msg_ext_info"]
-        flag = get_article(user, article_detail, entry, tor)
+        flag = get_article(article_detail, entry, tor)
         if flag == "LinkError":
             print(f"Link Error: {entry}")
         if flag == "Scraped":
@@ -80,9 +81,8 @@ def parse_entry(user: UserData, article_detail: ArticleData, entry, tor = True):
         count += 1
         if "multi_app_msg_item_list" in entry:
             sublist = entry["multi_app_msg_item_list"]
-            print("Sub-articles detected")
             for item in sublist:
-                flag = get_article(user, article_detail, item, tor)
+                flag = get_article(article_detail, item, tor)
                 if flag == "LinkError":
                     print(f"Link Error: {item}")
                 if flag == "Scraped":
@@ -94,7 +94,9 @@ def parse_entry(user: UserData, article_detail: ArticleData, entry, tor = True):
 
 def get_article(user: UserData, article_detail: ArticleData, entry, tor = True):
     global df_article
+    global global_params
     flag = ""
+    article_detail = ArticleData()
     if "title" in entry:
         article_detail.title = entry['title']
         article_detail.link = entry['content_url'].replace("amp;", "")
@@ -108,7 +110,7 @@ def get_article(user: UserData, article_detail: ArticleData, entry, tor = True):
     except Exception as e:
         print(f"Scrape Content Error. Title: {entry['title']}, link: {entry['content_url'].replace("amp;", "")}, error message: {e}")
     try:
-        get_stats(article_detail, user, tor)
+        get_stats(article_detail, tor)
     except Exception as e:
         print(f"Scrape Stats Error. Title: {entry['title']}, link: {entry['content_url'].replace("amp;", "")}, error message: {e}")
     df_article = pd.concat([df_article, pd.DataFrame([vars(article_detail)])], ignore_index=True)
@@ -117,7 +119,7 @@ def get_article(user: UserData, article_detail: ArticleData, entry, tor = True):
     
 def get_content(article_detail: ArticleData, tor = True):
     session = get_tor_session(tor)
-    response = session.get(article_detail.link, headers=general_head, verify=False, timeout=(10, 10))
+    response = session.get(article_detail.link, headers=general_head, verify=False, timeout=20)
     soup = BeautifulSoup(response.text, 'html.parser')
 
     # get article content
@@ -146,16 +148,17 @@ def get_content(article_detail: ArticleData, tor = True):
         create_time = datetime.datetime.fromtimestamp(timestamp)
     article_detail.pub_time = create_time
 
-def get_stats(article_detail: ArticleData, user: UserData, tor = True):
+def get_stats(article_detail: ArticleData, tor = True):
+    global global_params
     session = get_tor_session(tor)
     read_num, like_num = 0, 0
     query_params = parse_qs(urlparse(article_detail.link).query)
     mid = query_params['mid'][0]
     sn = query_params['sn'][0]
     idx = query_params['idx'][0]
-    detailUrl = f"https://mp.weixin.qq.com/mp/getappmsgext?f=json&mock=&fasttmplajax=1&uin={user.uin}&key={user.key}&pass_ticket={user.pass_ticket}"
-    response = session.post(detailUrl, headers=user_head(user),
-                             data=article_data(user, mid, sn, idx), verify=False).json()
+    detailUrl = f"https://mp.weixin.qq.com/mp/getappmsgext?f=json&mock=&fasttmplajax=1&uin={global_params.uin}&key={global_params.key}&pass_ticket={global_params.pass_ticket}"
+    response = session.post(detailUrl, headers=user_head(global_params),
+                             data=article_data(global_params, mid, sn, idx), verify=False).json()
     if "appmsgstat" in response:
         info = response['appmsgstat']
         #print(info)
@@ -163,6 +166,10 @@ def get_stats(article_detail: ArticleData, user: UserData, tor = True):
         article_detail.read = read_num
         like_num = info['old_like_num']
         article_detail.like = like_num
+    else:
+        print("Reloading parameters, please wait...")
+        get_params(reload = True)
+
     article_detail.scrape_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 def run(tor = True, day_max = 2500):
