@@ -92,7 +92,7 @@ def parse_entry(article_detail: ArticleData, entry, tor = True):
     else:
         print("No title")
 
-def get_article(user: UserData, article_detail: ArticleData, entry, tor = True):
+def get_article(article_detail: ArticleData, entry, tor = True):
     global df_article
     global global_params
     flag = ""
@@ -222,17 +222,17 @@ def run(tor = True, day_max = 2500):
         df_article = pd.DataFrame(columns = ["author", "title", "content", "link", "read", "like", "pub_time", "scrape_time"])
     
     while True:
-        url_list = get_links(global_params, tor)
+        url_list = get_links(tor)
         # First error detection: automatic refresh
         if len(url_list) == 0:
             print("Reloading parameters, please wait...")
             get_params(reload = True)
-            url_list = get_links(global_params, tor)
+            url_list = get_links(tor)
             # Second error detection: manual refresh
             if len(url_list) == 0:
                 input("Awaiting user action. Press any key to continue.")
                 get_params()
-                url_list = get_links(global_params, tor)
+                url_list = get_links(tor)
                 # Third error detection: break
                 if len(url_list) == 0:
                     ("Parameter error, verify account status")
@@ -243,7 +243,7 @@ def run(tor = True, day_max = 2500):
             article_detail = ArticleData()
             flag = ""
             try:
-                flag = parse_entry(global_params, article_detail, entry, tor)
+                flag = parse_entry(article_detail, entry, tor)
             except Exception as e:
                 print(e)
                 print(f"Scrape Error: {entry}")
