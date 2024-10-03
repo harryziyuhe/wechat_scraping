@@ -66,6 +66,8 @@ def get_links(tor = True):
 
 def check_existing(article_detail: ArticleData):
     global df_article
+    print (article_detail.title)
+    print (article_detail.content)
     return ((df_article['title'] == article_detail.title) & (df_article['content'] == article_detail.content)).any()
 
 def parse_entry(article_detail: ArticleData, entry, tor = True):
