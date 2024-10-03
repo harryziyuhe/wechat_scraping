@@ -66,8 +66,6 @@ def get_links(tor = True):
 
 def check_existing(article_detail: ArticleData):
     global df_article
-    print (article_detail.title)
-    print (article_detail.content)
     return ((df_article['title'] == article_detail.title) & (df_article['content'] == article_detail.content)).any()
 
 def parse_entry(article_detail: ArticleData, entry, tor = True):
@@ -105,12 +103,12 @@ def get_article(article_detail: ArticleData, entry, tor = True):
         article_detail.author = entry['author']
     else:
         return("LinkError")
-    if check_existing(article_detail):
-        flag = "Scraped"
     try:
         get_content(article_detail, tor)
     except Exception as e:
         print(f"Scrape Content Error. Title: {entry['title']}, link: {entry['content_url'].replace("amp;", "")}, error message: {e}")
+    if check_existing(article_detail):
+        flag = "Scraped"
     try:
         get_stats(article_detail, tor)
     except Exception as e:
