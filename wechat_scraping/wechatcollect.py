@@ -131,7 +131,7 @@ def get_content(article_detail: ArticleData, tor = True):
 
     if article_text:
         article_text = article_text.get_text()
-        content = '\n'.join([text.strip() for text in article_text if text.strip()])
+        content = ''.join([text.strip() for text in article_text if text.strip()])
     else:
         print("No element was found.")
     
