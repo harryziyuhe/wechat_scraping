@@ -65,14 +65,13 @@ def get_links(user: UserData, tor = True):
 
 def check_existing(article_detail: ArticleData):
     global df_article
-    return((df_article['title'] == article_detail.title).any())
+    return ((df_article['title'] == article_detail.title) & (df_article['content'] == article_detail.content)).any()
 
 def parse_entry(user: UserData, article_detail: ArticleData, entry, tor = True):
     global offset
     global count
     if "app_msg_ext_info" in entry:
         entry = entry["app_msg_ext_info"]
-        #print(entry)
         flag = get_article(user, article_detail, entry, tor)
         if flag == "LinkError":
             print(f"Link Error: {entry}")
@@ -204,7 +203,7 @@ def run(tor = True, day_max = 2500):
     if os.path.exists(f"data/{account_name}.csv"):
         df_article = pd.read_csv(f"data/{account_name}.csv", index_col=None)
     else:
-        df_article = pd.DataFrame(columns = ["author", "title", "content", "link", "read", "like", "time"])
+        df_article = pd.DataFrame(columns = ["author", "title", "content", "link", "read", "like", "pub_time", "scrape_time"])
     
     while True:
         url_list = get_links(global_params, tor)
