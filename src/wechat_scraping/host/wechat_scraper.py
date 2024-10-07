@@ -1,4 +1,4 @@
-import os, requests, re, datetime, urllib3, random, argparse, sys
+import os, re, datetime, urllib3, random, argparse, sys, time
 from src.wechat_scraping.host.utils import *
 from urllib.parse import urlparse, parse_qs
 from bs4 import BeautifulSoup
@@ -152,7 +152,7 @@ def get_content(article_detail: ArticleData, tor = True):
 def get_stats(article_detail: ArticleData, tor = True):
     global GLOBAL_PARAMS
     global PASSWORD
-    session = get_tor_session(to, PASSWORD)
+    session = get_tor_session(tor, PASSWORD)
     read_num, like_num = 0, 0
     query_params = parse_qs(urlparse(article_detail.link).query)
     mid = query_params['mid'][0]
