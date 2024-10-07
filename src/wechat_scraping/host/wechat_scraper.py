@@ -74,8 +74,6 @@ def parse_entry(article_detail: ArticleData, entry, tor = True):
     if 'app_msg_ext_info' in entry:
         entry = entry['app_msg_ext_info']
         flag = get_article(article_detail, entry, tor)
-        if flag == "LinkError":
-            print(f"Link Error: {entry}")
         if flag == "Scraped":
             if VERBOSE:
                 print("Some articles have been scraped")
@@ -86,8 +84,6 @@ def parse_entry(article_detail: ArticleData, entry, tor = True):
                 print('Sub-articles detected')
             for item in sublist:
                 flag = get_article(article_detail, item, tor)
-                if flag == "LinkError":
-                    print(f"Link Error: {item}")
                 COUNT += 1
         return flag
     else:
@@ -102,17 +98,17 @@ def get_article(article_detail: ArticleData, entry, tor = True):
         article_detail.link = entry['content_url'].replace("amp;", "")
         article_detail.author = entry['author']
     else:
-        return("LinkError")
+        update_bug(f"Link error: f{entry}.")
     try:
         get_content(article_detail, tor)
     except Exception as e:
-        print(f"Scrape Content Error. Title: {entry['title']}, link: {entry['content_url'].replace("amp;", "")}, error message: {e}")
+        update_bug(f"Scrape Content Error. Title: {entry['title']}, link: {entry['content_url'].replace("amp;", "")}, error message: {e}")
     if check_existing(article_detail):
         flag = "Scraped"
     try:
         get_stats(article_detail, tor)
     except Exception as e:
-        print(f"Scrape Stats Error. Title: {entry['title']}, link: {entry['content_url'].replace("amp;", "")}, error message: {e}")
+        update_bug(f"Scrape Stats Error. Title: {entry['title']}, link: {entry['content_url'].replace("amp;", "")}, error message: {e}")
     DF_ARTICLE = pd.concat([DF_ARTICLE, pd.DataFrame([vars(article_detail)])], ignore_index=True)
     time.sleep(random.uniform(2,5))
     return flag
@@ -138,7 +134,7 @@ def get_content(article_detail: ArticleData, tor = True):
         content = ''.join([text.strip() for text in article_text if text.strip()])
         article_detail.content = content
     else:
-        print("No element was found.")
+        update_bug(f"Scrape Content Error. Title: {article_detail.title}, link: {article_detail.link}, error message: article text not found.")
     
     # get article published date
     create_time = ''
@@ -220,8 +216,7 @@ def run(tor = True, day_max = 2500):
             try:
                 flag = parse_entry(article_detail, entry, tor)
             except Exception as e:
-                print(e)
-                print(f"Scrape Error: {entry}")
+                update_bug(f"Scrape Error: {entry}, error message: {e}")
             if flag == "Scraped":
                 if first_overlap:
                     first_overlap = False
