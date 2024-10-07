@@ -1,16 +1,13 @@
-import pyautogui
-import time
-import os
-import json
+import pyautogui, os, json, requests
 from stem import Signal
 from stem.control import Controller
-import requests
 import pandas as pd
 from datetime import datetime
 
 PROXY = "socks5://localhost:9050"
 log_path = os.path.join(os.path.dirname(__file__), 'log.json')
 offset_path = os.path.join(os.path.dirname(__file__), 'offset.json')
+bug_report_path = os.path.join(os.path.dirname(__file__), 'bug_report.txt')
 
 general_head = {
 	"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
@@ -148,6 +145,10 @@ def save_offset(account_name, offset):
     offset_dict[account_name] = offset
     with open(offset_path, 'w') as f:
         json.dump(offset_dict, f, indent = 4)
+
+def update_bug(message):
+    with open(bug_report_path, 'a') as f:
+        f.write(f"{message}\n")
 
 def refresh(account_name):
     # Move to random location to avoid blocking refresh button
