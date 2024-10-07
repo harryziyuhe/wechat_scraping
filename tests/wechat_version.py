@@ -1,4 +1,4 @@
-from wechat_scraping.virtualbox.param_retriever import setProxy, clearProxy
+from src.wechat_scraping.virtualbox.param_retriever import setProxy, clearProxy
 import subprocess, os
 
 setProxy(f"127.0.0.1:8888")

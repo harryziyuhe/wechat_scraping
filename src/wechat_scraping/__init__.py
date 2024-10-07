@@ -11,3 +11,5 @@ __all__ = [
     'stopProxy',
     'retrieve_params'
 ]
+
+__version__ = "0.1.0"
