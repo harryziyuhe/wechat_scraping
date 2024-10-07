@@ -3,6 +3,8 @@ import requests
 from stem import Signal
 from stem.control import Controller
 
+PASSWORD = 'secret'
+
 def test_tor_password(password: str):
     try:
         # Connect to the Tor control port
@@ -52,5 +54,4 @@ def get_current_ip():
         return None
 
 if __name__ == "__main__":
-    password = input("Please input your torrc password: ")
-    test_tor_password(password)
+    test_tor_password(PASSWORD)
