@@ -6,8 +6,11 @@ from stem import Signal
 from stem.control import Controller
 import requests
 import pandas as pd
+from datetime import datetime
 
 PROXY = "socks5://localhost:9050"
+log_path = os.path.join(os.path.dirname(__file__), 'log.json')
+offset_path = os.path.join(os.path.dirname(__file__), 'offset.json')
 
 general_head = {
 	"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
@@ -52,17 +55,22 @@ class ArticleData:
         self.pub_time = ""
         self.scrape_time = ""
 
-def get_tor_session(tor = True):
+def get_tor_session(tor = True, password = 'secret'):
     global tor_count
     session = requests.session()
     # Tor uses the 9050 port as the default socks port
     tor_count = (tor_count + 1) % 5
     if tor:
         if tor_count == 0:
-            renew_connection()
+            renew_connection(password)
         session.proxies = {'http':  'socks5://127.0.0.1:9050',
                            'https': 'socks5://127.0.0.1:9050'}
     return session
+
+def renew_connection(password = 'secret'):
+    with Controller.from_port(port=9051) as controller:
+        controller.authenticate(password)
+        controller.signal(Signal.NEWNYM)
 
 def user_head(user: UserData):
 	return {
@@ -93,51 +101,58 @@ def article_data(user: UserData, mid, sn, idx):
     }
 
 def get_account_name(user: UserData):
-    accounts = pd.read_excel("data/wechat_metadata.xlsx")
+    accounts = pd.read_excel(os.path.join(os.path.dirname(__file__),'../data/wechat_metadata.xlsx'))
     accounts.set_index('biz', inplace=True)
     
     if user.biz in accounts.index:
         return accounts.at[user.biz, 'Chinese']
     else:
         return ""
-    
-def renew_connection():
-    with Controller.from_port(port=9051) as controller:
-        controller.authenticate('secret')
-        controller.signal(Signal.NEWNYM)
 
-def click_account(account_name, biz, exp_key=""):
-    account_lst = {
-        "环球时报": "/home/harry/Documents/GitHub/wechat_scraping/01_code/global_times.png",
-        "新华网": "/home/harry/Documents/GitHub/wechat_scraping/01_code/xinhua_news.png"
-    }
-    header_lst = {
-        "环球时报": "/home/harry/Documents/GitHub/wechat_scraping/01_code/global_times_header.png",
-    }
-    x, y = pyautogui.locateCenterOnScreen(header_lst[account_name])
-    while x is None or y is None:
-        try:
-            pyautogui.click(account_lst[account_name])
-            time.sleep(3)
-        except Exception as e:
-            print(e)
-        x, y = pyautogui.locateOnScreen(header_lst[account_name])
-    y = y + 300
-    while True:
-        pyautogui.click(x, y)
-        time.sleep(3)
-        get_params()
-        if global_params != None:
-            print("Official account identified, initialize scraping")
-            break
-        else:
-            print("detecting")
-        y = y + 50
+def load_log():
+    today = datetime.now().strftime("%Y-%m-%d")
+    try:
+        with open(log_path, 'r') as f:
+            scrape_log = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        scrape_log = {}
+
+    return scrape_log.get(today, 0)
+
+def save_log(count):
+    today = datetime.now().strftime("%Y-%m-%d")
+    try:
+        with open(log_path, 'r') as f:
+            scrape_log = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        scrape_log = {}
+
+    scrape_log[today] = count
+    with open(log_path, 'w') as f:
+        json.dump(scrape_log, f, indent = 4)
+
+def load_offset(account_name):
+    try:
+        with open(offset_path, 'r', encoding='utf-8') as f:
+            offset_dict = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        offset_dict = {}
+    return offset_dict.get(account_name, 2)
+
+def save_offset(account_name, offset):
+    try:
+        with open(offset_path, 'r', encoding='utf-8') as f:
+            offset_dict = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        offset_dict = {}
+    offset_dict[account_name] = offset
+    with open(offset_path, 'w') as f:
+        json.dump(offset_dict, f, indent = 4)
 
 def refresh(account_name):
     # Move to random location to avoid blocking refresh button
     pyautogui.moveTo(500, 500, duration=0.5)
-    refresh_button = f"fig/{account_name}.png"
+    refresh_button = os.path.join(os.path.dirname(__file__),f'../figures/{account_name}.png')
     print(refresh_button)
     try:
         location = pyautogui.locateOnScreen(refresh_button)
@@ -148,22 +163,6 @@ def refresh(account_name):
     # Move to random location to avoid blocking refresh button
     pyautogui.moveTo(x + 50, y + 50, duration=0.5)
     
-
-def click_links(account_name):
-    account_lst = {
-        "环球时报": "/home/harry/Documents/GitHub/wechat_scraping/01_code/global_times.png",
-        "新华网": "/home/harry/Documents/GitHub/wechat_scraping/01_code/xinhua_news.png"
-    }
-    header_lst = {
-        "环球时报": "/home/harry/Documents/GitHub/wechat_scraping/01_code/global_times_header.png",
-    }
-    input("Please confirm scraping set up is ready by pressing enter...")
-    x, y = pyautogui.locateOnScreen(header_lst[account_name])
-    while x is None or y is None:
-        input("Scraping set up not ready, please set up and confirm by pressing enter...")
-        x, y = pyautogui.locateOnScreen(header_lst[account_name])
-    ytop = y + 50
-    ybottom = y + 1000
     
 
 
