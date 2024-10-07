@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "wechat-scraping"
+dynamic = ["version"]
+description = "A package for scraping WeChat Official Account posts data using a host and VirtualBox environment."
+readme = "README.md"
+license = ""
+requires-python = ">=3.9"
+authors = [
+    { name = "Ziyu He", email = "zih028@ucsd.edu" },
+]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "bs4",
+    "json",
+    "mitmproxy",
+    "pandas",
+    "pyautogui",
+    "requests",
+    "stem",
+    "urllib3",
+]
+
+[project.scripts]
+setup-vm = "setup.setup_virtualbox_and_vm:main"
+wechat-scraper = "wechat_scraper.host.wechat_scraper:main"
+
+[project.urls]
+Homepage = "https://github.com/harryziyuhe/wechat_scraping"
+
+[tool.hatch.version]
+path = "src/wechat_scraping/__init__.py"  # Path to where the version is stored
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+]
