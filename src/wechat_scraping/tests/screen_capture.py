@@ -1,4 +1,4 @@
-import pyautogui, subprocess 
+import pyautogui, subprocess, os
 
 
 # Take a screenshot
