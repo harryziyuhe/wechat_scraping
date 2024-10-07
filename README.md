@@ -18,7 +18,7 @@ Once we have the required parameters, we use them to programmatically retrieve a
 
 To run the `mitmproxy` component, we need to modify the network proxies so that all internet traffic is routed through the port designated by `mitmproxy`. However, this setup can interfere with the scraping process, as the `requests` package may flag warnings when requests pass through the proxy port. Additionally, to implement this approach at scale and avoid IP blocking, we need to use Tor for anonymity.
 
-To avoid potential proxy conflicts, we suggest running the `mitmproxy` code in a VirtualBox environment with an older version of WeChat (released prior to April 2023) installed. Setting the current folder as the shared folder will allow indirect communication between `mitmproxy` and the scraper, which is essential for the pipeline to function correctly.
+To avoid potential proxy conflicts, we suggest running the `mitmproxy` code in a VirtualBox environment. Setting the current folder as the shared folder will allow indirect communication between `mitmproxy` and the scraper, which is essential for the pipeline to function correctly.
 
 ## Additional Features and Future Plans
 
