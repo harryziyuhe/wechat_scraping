@@ -3,7 +3,7 @@
 ## Setup
 Besides installing necessary Python packages, the most important setup involves two steps:
 1. Create two standalone environments, one for capturing web traffic and one for scraping.
-2. Install a functional verion of WeChat in the web traffic monitoring environment (the pipeline does not work with the most updated version of WeChat on MacOS and Windows. Need to install an older version released before April, 2023.)
+2. Install a functional verion of WeChat in the web traffic monitoring environment
 
 To check whether the current installed version of WeChat works, run `python wechat_version.py` in the web traffic monitoring environment.
 
