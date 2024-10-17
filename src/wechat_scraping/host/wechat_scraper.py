@@ -1,5 +1,5 @@
 import os, re, datetime, urllib3, random, argparse, sys, time
-from src.wechat_scraping.host.utils import *
+from wechat_scraping.host.utils import *
 from urllib.parse import urlparse, parse_qs
 from bs4 import BeautifulSoup
 import pandas as pd
