@@ -280,5 +280,8 @@ def main():
 # 5. After each iteration, save article data into csv file for maximum record retention
 
 if __name__ == "__main__":
-    wechat_scraper()
+    try:
+        wechat_scraper()
+    except:
+        stopProxy()
     
