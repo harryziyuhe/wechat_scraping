@@ -142,7 +142,7 @@ def get_content(article_detail: ArticleData, tor = True, retries = 3):
                 break
         except Exception as e:
             if attempt == retries:
-                update_bug(f"Scrape Content Error. Title: {entry['title']}, link: {entry['content_url'].replace("amp;", "")}, error message: {e}")
+                update_bug(f"Scrape Content Error. Title: {article_detail['title']}, link: {article_detail['content_url'].replace("amp;", "")}, error message: {e}")
     if article_text:
         article_text = article_text.get_text()
         content = ''.join([text.strip() for text in article_text if text.strip()])
