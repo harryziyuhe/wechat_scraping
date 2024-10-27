@@ -1,4 +1,4 @@
-import pyautogui, os, json, requests
+import pyautogui, os, json, requests, sys
 from stem import Signal
 from stem.control import Controller
 import pandas as pd
@@ -49,6 +49,8 @@ class ArticleData:
         self.link = ""
         self.read = ""
         self.like = ""
+        self.watch = ""
+        self.share = ""
         self.pub_time = ""
         self.scrape_time = ""
 
@@ -158,14 +160,21 @@ def refresh(account_name):
     try:
         location = pyautogui.locateOnScreen(refresh_button)
         x, y = pyautogui.center(location)
+        pyautogui.click(x, y + 50)
+        # Move to random location to avoid blocking refresh button
+        pyautogui.moveTo(x + 50, y + 50, duration=0.5)
     except:
-        input("Refresh button not found, verify set up and press enter.")
-    pyautogui.click(x, y + 50)
-    # Move to random location to avoid blocking refresh button
-    pyautogui.moveTo(x + 50, y + 50, duration=0.5)
+        input("Refresh button not found. Please manually refresh.")
     
     
+def tprint(message):
+    sys.stdout.write(f"{message}\n")
+    sys.stdout.flush()
 
+def pprint(message):
+    # Print the static message that stays all the time
+    sys.stdout.write(f"{message}\n")
+    sys.stdout.flush()
 
 #click_account("Global Times")
 #print(pyautogui.position())

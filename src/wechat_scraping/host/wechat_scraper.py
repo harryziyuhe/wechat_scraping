@@ -1,7 +1,9 @@
-import os, re, datetime, urllib3, random, argparse, sys, time
-from wechat_scraping.host.utils import *
+import os, re, urllib3, random, argparse, sys, time
+#from wechat_scraping.host.utils import *
+from utils import *
 from urllib.parse import urlparse, parse_qs
 from bs4 import BeautifulSoup
+from datetime import datetime
 import pandas as pd
 
 DATE_TIME_PATTERN = re.compile(r'var create_time = "(\d+)"')
@@ -25,7 +27,7 @@ def get_params(reload = False):
     if reload:
         refresh(ACCOUNT_NAME)
     if VERBOSE:
-        print('Detecting...')
+        tprint('Detecting...')
     while True:
         if os.path.exists(params_path):
             json_params = open(params_path, "r", encoding = "utf-8")
@@ -33,7 +35,7 @@ def get_params(reload = False):
             GLOBAL_PARAMS = UserData.fromJson(params)
             json_params.close()
             if GLOBAL_PARAMS != None:
-                print("Parameters detected")
+                tprint("Parameters detected")
                 break
         time.sleep(1)
 
@@ -48,18 +50,28 @@ def initialize():
         os.remove(params_path)
     get_params()
     ACCOUNT_NAME = get_account_name(GLOBAL_PARAMS)
-    print(f"Start scraping {ACCOUNT_NAME}")
+    pprint(f"Start scraping {ACCOUNT_NAME}")
 
 def check_existing(article_detail: ArticleData):
     global DF_ARTICLE
     return ((DF_ARTICLE['title'] == article_detail.title) & (DF_ARTICLE['content'] == article_detail.content)).any()
 
-def get_links(tor = True):
+def get_links(tor = True, retries = 5):
     global CONTINUE_FLAG
     global GLOBAL_PARAMS
     url = f"https://mp.weixin.qq.com/mp/profile_ext?action=getmsg&f=json&COUNT=10&is_ok=1&__biz={GLOBAL_PARAMS.biz}&key={GLOBAL_PARAMS.key}&uin={GLOBAL_PARAMS.uin}&pass_ticket={GLOBAL_PARAMS.pass_ticket}&OFFSET={OFFSET}"
     session = get_tor_session(tor)
-    msg_json = session.get(url, headers=user_head(GLOBAL_PARAMS), verify=False).json()
+    for attempt in range(retries):
+        try:
+            msg_json = session.get(url, headers=user_head(GLOBAL_PARAMS), verify=False, timeout = 10).json()
+            break
+        except Exception as e:
+            tprint("Reconnecting...")
+            time.sleep(1)
+            if attempt == retries - 1:
+                update_bug(f"Error: all attempts failed. link: {url}")
+                pprint(f"Error: all attempts failed. {e}")
+                sys.exit()
     if (('can_msg_continue' in msg_json) and msg_json['can_msg_continue'] != 1):
         CONTINUE_FLAG = 0
     if "general_msg_list" in msg_json.keys():
@@ -76,18 +88,18 @@ def parse_entry(article_detail: ArticleData, entry, tor = True):
         flag = get_article(article_detail, entry, tor)
         if flag == "Scraped":
             if VERBOSE:
-                print("Some articles have been scraped")
+                tprint("Some articles have been scraped")
         COUNT += 1
         if "multi_app_msg_item_list" in entry:
             sublist = entry["multi_app_msg_item_list"]
             if VERBOSE:
-                print('Sub-articles detected')
+                tprint('Sub-articles detected')
             for item in sublist:
                 flag = get_article(article_detail, item, tor)
                 COUNT += 1
         return flag
     else:
-        print("No title")
+        pprint("No title")
 
 def get_article(article_detail: ArticleData, entry, tor = True):
     global DF_ARTICLE
@@ -109,26 +121,28 @@ def get_article(article_detail: ArticleData, entry, tor = True):
         get_stats(article_detail, tor)
     except Exception as e:
         update_bug(f"Scrape Stats Error. Title: {entry['title']}, link: {entry['content_url'].replace("amp;", "")}, error message: {e}")
-    DF_ARTICLE = pd.concat([DF_ARTICLE, pd.DataFrame([vars(article_detail)])], ignore_index=True)
+    if len(DF_ARTICLE) == 0:
+        DF_ARTICLE = pd.DataFrame([vars(article_detail)])
+    else:
+        DF_ARTICLE = pd.concat([DF_ARTICLE, pd.DataFrame([vars(article_detail)])], ignore_index=True)
     time.sleep(random.uniform(2,5))
     return flag
     
-def get_content(article_detail: ArticleData, tor = True):
+def get_content(article_detail: ArticleData, tor = True, retries = 3):
     global PASSWORD
     session = get_tor_session(tor, PASSWORD)
-    response = session.get(article_detail.link, headers=general_head, verify=False, timeout=20)
-    soup = BeautifulSoup(response.text, 'html.parser')
-
-    # get article content
-    article_text = soup.find(id="js_content") or soup.find(id="page_content") or soup.find(id="page-content")
-    if article_text is None:
-        if VERBOSE:
-            print("Reloading content page...")
-        session = get_tor_session(tor)
-        response = session.get(article_detail.link, headers=general_head, verify=False, timeout=20)
-        soup = BeautifulSoup(response.text, 'html.parser')
-        article_text = soup.find(id="js_content") or soup.find(id="page_content") or soup.find(id="page-content")
-
+    for attempt in range(retries):
+        try:
+            response = session.get(article_detail.link, headers=general_head, verify=False, timeout=20)
+            soup = BeautifulSoup(response.text, 'html.parser')
+            article_text = soup.find(id="js_content") or soup.find(id="page_content") or soup.find(id="page-content")
+            if article_text is None:
+                tprint("Reloading content page...")
+            else:
+                break
+        except Exception as e:
+            if attempt == retries:
+                update_bug(f"Scrape Content Error. Title: {entry['title']}, link: {entry['content_url'].replace("amp;", "")}, error message: {e}")
     if article_text:
         article_text = article_text.get_text()
         content = ''.join([text.strip() for text in article_text if text.strip()])
@@ -142,14 +156,14 @@ def get_content(article_detail: ArticleData, tor = True):
     if match:
         timestamp = int(match.group(1))
         # Convert the timestamp to a datetime object
-        create_time = datetime.datetime.fromtimestamp(timestamp)
+        create_time = datetime.fromtimestamp(timestamp)
     article_detail.pub_time = create_time
 
 def get_stats(article_detail: ArticleData, tor = True):
     global GLOBAL_PARAMS
     global PASSWORD
     session = get_tor_session(tor, PASSWORD)
-    read_num, like_num = 0, 0
+    read_num, like_num, watch_num, share_num = 0, 0, 0, 0
     query_params = parse_qs(urlparse(article_detail.link).query)
     mid = query_params['mid'][0]
     sn = query_params['sn'][0]
@@ -163,9 +177,13 @@ def get_stats(article_detail: ArticleData, tor = True):
         article_detail.read = read_num
         like_num = info['old_like_num']
         article_detail.like = like_num
+        watch_num = info['like_num']
+        article_detail.watch = watch_num
+        share_num = info['share_num']
+        article_detail.share = share_num
     else:
         if VERBOSE:
-            print("Reloading parameters, please wait...")
+            tprint("Reloading parameters, please wait...")
         get_params(reload = True)
         detailUrl = f"https://mp.weixin.qq.com/mp/getappmsgext?f=json&mock=&fasttmplajax=1&uin={GLOBAL_PARAMS.uin}&key={GLOBAL_PARAMS.key}&pass_ticket={GLOBAL_PARAMS.pass_ticket}"
         response = session.post(detailUrl, headers=user_head(GLOBAL_PARAMS),
@@ -176,8 +194,12 @@ def get_stats(article_detail: ArticleData, tor = True):
             article_detail.read = read_num
             like_num = info['old_like_num']
             article_detail.like = like_num
+            watch_num = info['like_num']
+            article_detail.watch = watch_num
+            share_num = info['share_num']
+            article_detail.share = share_num
 
-    article_detail.scrape_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    article_detail.scrape_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 def run(tor = True, day_max = 2500):
     global GLOBAL_PARAMS
@@ -190,24 +212,26 @@ def run(tor = True, day_max = 2500):
     initialize()
     
     start_count = load_log()
-    offset_plus = load_offset(ACCOUNT_NAME)
+    OFFSET = load_offset(ACCOUNT_NAME)
+
+    data_path = os.path.join(os.path.dirname(__file__), f'../data/{ACCOUNT_NAME}.csv')
     
-    if os.path.exists(f"data/{ACCOUNT_NAME}.csv"):
-        DF_ARTICLE = pd.read_csv(f"data/{ACCOUNT_NAME}.csv", index_col=None)
+    if os.path.exists(data_path):
+        DF_ARTICLE = pd.read_csv(data_path, index_col=None)
     else:
-        DF_ARTICLE = pd.DataFrame(columns = ["author", "title", "content", "link", "read", "like", "pub_time", "scrape_time"])
+        DF_ARTICLE = pd.DataFrame(columns = ["author", "title", "content", "link", "read", "like", "watch", "share", "pub_time", "scrape_time"])
     
     while True:
         url_list = get_links(tor)
         # First error detection: automatic refresh
         if len(url_list) == 0:
-            print("Reloading parameters, please wait...")
+            pprint("Reloading parameters, please wait...")
             get_params(reload = True)
             url_list = get_links(tor)
             # Second error detection: break
             if len(url_list) == 0:
-                print("Parameter error, verify account status")
-                print(f"Article collection ended. {COUNT} articles collected.")
+                pprint("Parameter error, verify account status")
+                pprint(f"Article collection ended. {COUNT} articles collected.")
                 sys.exit()
         first_overlap = True
         for entry in url_list:
@@ -217,31 +241,31 @@ def run(tor = True, day_max = 2500):
                 flag = parse_entry(article_detail, entry, tor)
             except Exception as e:
                 update_bug(f"Scrape Error: {entry}, error message: {e}")
-            if flag == "Scraped":
-                if first_overlap:
-                    first_overlap = False
-                else:
-                    OFFSET = OFFSET + offset_plus - 1
-                    if offset_plus > 2:
-                        offset_plus = 2
-                        break
-                    else: 
-                        continue
+#            if flag == "Scraped":
+#                if first_overlap:
+#                    first_overlap = False
+#                else:
+#                    OFFSET = OFFSET + offset_plus - 1
+#                    if offset_plus > 2:
+#                        offset_plus = 2
+#                        break
+#                    else: 
+#                        continue
             OFFSET += 1
-            DF_ARTICLE.to_csv(f"data/{ACCOUNT_NAME}.csv", index=False)
+            DF_ARTICLE.to_csv(data_path, index=False)
             save_offset(ACCOUNT_NAME, OFFSET)
             save_log(start_count + COUNT)
         if start_count + COUNT > day_max:
-            print(f"Daily maximum reached. {COUNT} articles collected.")
+            pprint(f"Daily maximum reached. {COUNT} articles collected.")
             sys.exit()
         if (CONTINUE_FLAG == 0):
-            print(f"Article collection completed. {COUNT} articles collected.")
+            pprint(f"Article collection completed. {COUNT} articles collected.")
             sys.exit()
-        print(f"Time elapsed: {(time.time() - start_time):.2f} seconds, {COUNT} articles scraped")
+        pprint(f"Time elapsed: {(time.time() - start_time):.2f} seconds, {COUNT} articles scraped")
 
         time.sleep(random.uniform(2, 5))
 
-def wechat_scraper(verbose = False, daymax = 2500):
+def wechat_scraper(verbose = True, daymax = 2500):
     global VERBOSE
     VERBOSE = verbose
     tor = input("Use Tor to avoid IP blocks (default is yes)? Y/n: ").upper()
