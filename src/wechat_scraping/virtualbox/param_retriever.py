@@ -1,6 +1,6 @@
 import subprocess, platform, os, argparse
 
-def setProxy(proxy_server):
+def setProxy(proxy_server, verbose = True):
     """
     Sets the system-wide browser level proxy settings based on the operating system.
 
@@ -16,13 +16,14 @@ def setProxy(proxy_server):
     if os_type == "Darwin": # macOS configuration
 
         # Set the network service name; adjust if needed (e.g., Wi-Fi, Ethernet)
-        network_service = "Ethernet"
+        network_service = "Wi-Fi"
 
         # Check if network service is valid
         check_cmd = f'networksetup -listallnetworkservices'
         output = subprocess.run(check_cmd.split(), capture_output = True, text = True)
-        print("Available network service:")
-        print(output.stdout)
+        if verbose:
+            print("Available network service:")
+            print(output.stdout)
 
         # Ensure the input network service name exists
         if network_service not in output.stdout:
@@ -48,8 +49,9 @@ def setProxy(proxy_server):
         # Check if network service is valid
         check_cmd = 'nmcli connection show'
         output = subprocess.run(check_cmd.split(), capture_output=True, text=True)
-        print("Available network connections:")
-        print(output.stdout)
+        if verbose:
+            print("Available network connections:")
+            print(output.stdout)
 
         # Ensure the input network connection exists
         if network_connection not in output.stdout:
@@ -87,8 +89,9 @@ def setProxy(proxy_server):
         # Check if the network interface is valid
         check_cmd = 'netsh interface show interface'
         output = subprocess.run(check_cmd, capture_output = True, text = True)
-        print("Available network interfaces:")
-        print(output.stdout)
+        if verbose:
+            print("Available network interfaces:")
+            print(output.stdout)
 
         # Ensure the input network service name exists
         if network_service not in output.stdout:
@@ -106,7 +109,7 @@ def setProxy(proxy_server):
     else:
         print("Unsupported operating system.")
 
-def clearProxy():
+def clearProxy(verbose = True):
     """
     Clears the proxy settings based on the operating system.
     """
@@ -115,13 +118,14 @@ def clearProxy():
 
     if os_type == 'Darwin':  # macOS
         # Set the network service name, such as "Wi-Fi" or "Ethernet"
-        network_service = 'Ethernet'
+        network_service = 'Wi-Fi'
 
         # Check if the network service is valid
         check_cmd = 'networksetup -listallnetworkservices'
         output = subprocess.run(check_cmd.split(), capture_output=True, text=True)
-        print("Available network services:")
-        print(output.stdout)
+        if verbose:
+            print("Available network services:")
+            print(output.stdout)
 
         # Ensure the input network service name exists
         if network_service not in output.stdout:
@@ -141,8 +145,9 @@ def clearProxy():
         # Check if the network interface is valid
         check_cmd = 'netsh interface show interface'
         output = subprocess.run(check_cmd, capture_output=True, text=True, shell=True)
-        print("Available network interfaces:")
-        print(output.stdout)
+        if verbose:
+            print("Available network interfaces:")
+            print(output.stdout)
 
         # Ensure the input network interface name exists
         if network_service not in output.stdout:
@@ -159,7 +164,7 @@ def clearProxy():
         print("Unsupported operating system.")
 
 
-def proxyThread(port = '8888', quiet = False):
+def proxyThread(port = '8888', quiet = False, verbose = True):
     """
     Starts the mitmproxy process with the process settings enabled.
 
@@ -170,7 +175,7 @@ def proxyThread(port = '8888', quiet = False):
     global mitmprocess
 
     # Set the proxy to redirect traffic to mitmproxy
-    setProxy(f"127.0.0.1:{port}")
+    setProxy(f"127.0.0.1:{port}", verbose)
 
     mitmproxy_path = os.path.join(os.path.dirname(__file__), 'mitm_proxy_manager.py')
 
