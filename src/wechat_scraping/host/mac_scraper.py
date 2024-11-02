@@ -88,7 +88,7 @@ def get_params(reload = False):
     if reload:
         refresh(ACCOUNT_NAME)
     if VERBOSE:
-        print('Detecting...')
+        print('Detecting... Please click on a post')
     while True:
         if os.path.exists(params_path):
             json_params = open(params_path, "r", encoding = "utf-8")
@@ -310,7 +310,7 @@ def run(tor = True, day_max = 2500):
 
         time.sleep(random.uniform(2, 5))
 
-def wechat_scraper(verbose = False, daymax = 2500):
+def wechat_scraper(verbose = True, daymax = 2500):
     global VERBOSE
     VERBOSE = verbose
     tor = input("Use Tor to avoid IP blocks (default is yes)? Y/n: ").upper()
