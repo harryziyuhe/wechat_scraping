@@ -1,13 +1,8 @@
-import os, re, datetime, urllib3, random, argparse, sys, time
-from tabnanny import verbose
+import os, re, datetime, urllib3, random, argparse, sys, time, subprocess, threading
 from utils import *
 from urllib.parse import urlparse, parse_qs
 from bs4 import BeautifulSoup
 import pandas as pd
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from virtualbox.param_retriever import proxyThread, stopProxy
-
 
 DATE_TIME_PATTERN = re.compile(r'var create_time = "(\d+)"')
 GLOBAL_PARAMS = None
@@ -20,12 +15,74 @@ urllib3.disable_warnings()
 params_path = os.path.join(os.path.dirname(__file__), '../virtualbox/params.json')
 PASSWORD = 'secret'
 VERBOSE = False
+mitmproxy_path = os.path.join(os.path.dirname(__file__), '../virtualbox/mitm_proxy_manager.py')
+
+
+def proxyThread():
+	global MITMPROXY_PROCESS
+
+	# 设置全局代理
+	setProxy("127.0.0.1:8888")
+
+	# 检查是否存在proxy.py，如果不存在，就创建一个
+	# 启动mitmproxy作为一个子进程
+	MITMPROXY_PROCESS = subprocess.Popen(['mitmdump', '-s', mitmproxy_path, "-p", "8888","-q"])
+
+def setProxy(proxy_server, enable=True):
+	# 代理服务器地址和端口，格式如 "192.168.1.1:8080"
+	proxy_ip, proxy_port = proxy_server.split(':')
+
+	# 设定网络服务的名称，如 'Wi-Fi' 或 'Ethernet'
+	network_service = 'Wi-Fi'
+
+	# 检查网络服务是否有效
+	check_cmd = f'networksetup -listallnetworkservices'
+	output = subprocess.run(check_cmd.split(), capture_output=True, text=True)
+
+	# 确保输入的网络服务名称存在
+	if network_service not in output.stdout:
+		print(f"Error: The network service '{network_service}' is not valid.")
+		return
+
+	# 构建命令
+	cmd_base = f'networksetup -setwebproxy {network_service} {proxy_ip} {proxy_port}'
+	cmd_base_secure = f'networksetup -setsecurewebproxy {network_service} {proxy_ip} {proxy_port}'
+
+	if enable:
+		# 启用代理
+		subprocess.call(cmd_base.split())
+		subprocess.call(cmd_base_secure.split())
+		subprocess.call(f'networksetup -setwebproxystate {network_service} on'.split())
+		subprocess.call(f'networksetup -setsecurewebproxystate {network_service} on'.split())
+	else:
+		# 禁用代理
+		subprocess.call(f'networksetup -setwebproxystate {network_service} off'.split())
+		subprocess.call(f'networksetup -setsecurewebproxystate {network_service} off'.split())
+
+def clearProxy():
+    network_service = "Wi-Fi"
+
+    check_cmd = f'networksetup -listallnetworkservices'
+    output = subprocess.run(check_cmd.split(), capture_output=True, text=True)
+
+    if network_service not in output.stdout:
+        print(f"Error: The network service '{network_service}' is not valid.")
+
+    subprocess.call(f'networksetup -setwebproxystate {network_service} off'.split())
+    print("HTTP proxy disabled.")
+
+    subprocess.call(f'networksetup -setsecurewebproxystate {network_service} off'.split())
+    print("HTTPS proxy disabled.")
+
+    subprocess.call(f'networksetup -setwebproxystate {network_service} off'.split())
+    subprocess.call(f'networksetup -setsecurewebproxystate {network_service} off'.split())
 
 def get_params(reload = False):
     global GLOBAL_PARAMS
     global ACCOUNT_NAME
     global VERBOSE
-    proxyThread(port = "8888", verbose = False)
+    t1 = threading.Thread(target = proxyThread)
+    t1.start()
     if os.path.exists(params_path):
         os.remove(params_path)
     if reload:
@@ -40,8 +97,9 @@ def get_params(reload = False):
             json_params.close()
             if GLOBAL_PARAMS != None:
                 print("Parameters detected")
-                stopProxy(verbose = False)
-                break
+                clearProxy()
+                print("Proxy stopped")
+                return
         time.sleep(1)
 
 def initialize():
@@ -51,9 +109,11 @@ def initialize():
     global ACCOUNT_NAME
     OFFSET = 0
     COUNT = 0
+    clearProxy()
     if os.path.exists(params_path):
         os.remove(params_path)
     get_params()
+    print("Parameters Retrieved")
     ACCOUNT_NAME = get_account_name(GLOBAL_PARAMS)
     print(f"Start scraping {ACCOUNT_NAME}")
 
@@ -109,13 +169,13 @@ def get_article(article_detail: ArticleData, entry, tor = True):
     try:
         get_content(article_detail, tor)
     except Exception as e:
-        update_bug(f"Scrape Content Error. Title: {entry['title']}, link: {entry['content_url'].replace("amp;", "")}, error message: {e}")
+        update_bug(f"Scrape Content Error. Title: {entry['title']}, link: {entry['content_url'].replace('amp;', '')}, error message: {e}")
     if check_existing(article_detail):
         flag = "Scraped"
     try:
         get_stats(article_detail, tor)
     except Exception as e:
-        update_bug(f"Scrape Stats Error. Title: {entry['title']}, link: {entry['content_url'].replace("amp;", "")}, error message: {e}")
+        update_bug(f"Scrape Stats Error. Title: {entry['title']}, link: {entry['content_url'].replace('amp;', '')}, error message: {e}")
     DF_ARTICLE = pd.concat([DF_ARTICLE, pd.DataFrame([vars(article_detail)])], ignore_index=True)
     time.sleep(random.uniform(2,5))
     return flag
@@ -282,8 +342,6 @@ def main():
 # 5. After each iteration, save article data into csv file for maximum record retention
 
 if __name__ == "__main__":
-    try:
-        wechat_scraper()
-    except:
-        stopProxy()
+    wechat_scraper()
+    clearProxy()
     
