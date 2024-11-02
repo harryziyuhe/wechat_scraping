@@ -109,7 +109,7 @@ def setProxy(proxy_server, verbose = True):
     else:
         print("Unsupported operating system.")
 
-def clearProxy(verbose = True):
+def clearProxy(verbose = False):
     """
     Clears the proxy settings based on the operating system.
     """
@@ -134,9 +134,11 @@ def clearProxy(verbose = True):
 
         # Disable HTTP and HTTPS proxy settings
         subprocess.call(f'networksetup -setwebproxystate {network_service} off'.split())
-        print("HTTP proxy disabled.")
+        if verbose:
+            print("HTTP proxy disabled.")
         subprocess.call(f'networksetup -setsecurewebproxystate {network_service} off'.split())
-        print("HTTPS proxy disabled.")
+        if verbose:
+            print("HTTPS proxy disabled.")
 
     elif os_type == 'Windows': # Windows
         # Set the network service name; adjust if needed (e.g., Wi-Fi, Ethernet)
@@ -185,7 +187,7 @@ def proxyThread(port = '8888', quiet = False, verbose = True):
     else:
         mitmprocess = subprocess.Popen(['mitmdump', '-s', mitmproxy_path, '-p', port])
 
-def stopProxy():
+def stopProxy(verbose = True):
     """
     Stops the mitmproxy process and clears settings.
     """
@@ -193,7 +195,7 @@ def stopProxy():
         mitmprocess.terminate()  # Terminate the mitmproxy process
         mitmprocess.wait()  # Wait for the process to finish
         print("mitmproxy terminated.")
-    clearProxy()  # Clear proxy settings after stopping mitmproxy
+    clearProxy(verbose = verbose)  # Clear proxy settings after stopping mitmproxy
 
 def retrieve_params(quiet = False):
     try:
