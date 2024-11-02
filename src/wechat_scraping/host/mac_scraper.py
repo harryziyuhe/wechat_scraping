@@ -197,12 +197,14 @@ def run(tor = True, day_max = 2500):
     initialize()
     
     start_count = load_log()
-    offset_plus = load_offset(ACCOUNT_NAME)
+    OFFSET = load_offset(ACCOUNT_NAME)
+
+    data_path = os.path.join(os.path.dirname(__file__), f'../data/{ACCOUNT_NAME}.csv')
     
-    if os.path.exists(f"data/{ACCOUNT_NAME}.csv"):
-        DF_ARTICLE = pd.read_csv(f"data/{ACCOUNT_NAME}.csv", index_col=None)
+    if os.path.exists(data_path):
+        DF_ARTICLE = pd.read_csv(data_path, index_col=None)
     else:
-        DF_ARTICLE = pd.DataFrame(columns = ["author", "title", "content", "link", "read", "like", "pub_time", "scrape_time"])
+        DF_ARTICLE = pd.DataFrame(columns = ["author", "title", "content", "link", "read", "like", "watch", "share", "pub_time", "scrape_time"])
     
     while True:
         url_list = get_links(tor)
@@ -224,16 +226,16 @@ def run(tor = True, day_max = 2500):
                 flag = parse_entry(article_detail, entry, tor)
             except Exception as e:
                 update_bug(f"Scrape Error: {entry}, error message: {e}")
-            if flag == "Scraped":
-                if first_overlap:
-                    first_overlap = False
-                else:
-                    OFFSET = OFFSET + offset_plus - 1
-                    if offset_plus > 2:
-                        offset_plus = 2
-                        break
-                    else: 
-                        continue
+#            if flag == "Scraped":
+#                if first_overlap:
+#                    first_overlap = False
+#                else:
+#                    OFFSET = OFFSET + offset_plus - 1
+#                    if offset_plus > 2:
+#                        offset_plus = 2
+#                        break
+#                    else: 
+#                        continue
             OFFSET += 1
             DF_ARTICLE.to_csv(f"data/{ACCOUNT_NAME}.csv", index=False)
             save_offset(ACCOUNT_NAME, OFFSET)

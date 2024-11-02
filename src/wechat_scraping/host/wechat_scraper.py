@@ -233,7 +233,6 @@ def run(tor = True, day_max = 2500):
                 pprint("Parameter error, verify account status")
                 pprint(f"Article collection ended. {COUNT} articles collected.")
                 sys.exit()
-        first_overlap = True
         for entry in url_list:
             article_detail = ArticleData()
             flag = ""
